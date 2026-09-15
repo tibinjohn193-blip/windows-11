@@ -5,7 +5,12 @@ Interactive, browser-based simulations of common Windows 11 Pro setup and admini
 
 File: Booting windows 11 pro to USB(CReating BOOtable pendrive)
 
-Simulates using Rufus to write a Windows 11 ISO onto a USB drive. Covers a plain desktop with This PC, Rufus, and the ISO file; an Explorer-style file picker with a sidebar showing the connected pendrive under "Devices and drives"; auto-detected GPT/UEFI settings once the ISO is selected; the real "Windows User Experience" dialog (bypass TPM/Secure Boot/RAM checks, skip the Microsoft account requirement, create a local account); and a full format-and-copy progress log.
+Simulates using Rufus to write a Windows 11 ISO onto a USB drive. 
+
+Requirements
+RUFUS
+Rufus is a free, open-source Windows utility for creating bootable USB drives — most commonly used to put an operating system installer (like Windows or a Linux distro) onto a USB flash drive so you can boot from it and install the OS
+[clicke here to Download Rufus] (https://rufus.ie/en/)
 
 ▶ Open Lab 1
 
