@@ -26,3 +26,4 @@ A disk space usage slider with a live-updating usage bar and GB estimate
 A Delete button that clears all restore points for that drive (updates the System Restore wizard's list to "No restore points on this drive" if you check it)
 OK/Cancel at the bottom
 
+[LAB# RESTORE POINT](https://tibinjohn193-blip.github.io/windows-11/win11-create-restore-point-simulation.html)
