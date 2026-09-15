@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Rufus — Create Bootable USB Simulation</title>
+<style>
+  :root{
+    --dialog-bg:#F0F0F0;
+    --content-bg:#F0F0F0;
+    --border:#ACA899;
+    --accent:#0067C0;
+    --text:#1B1B1B;
+    --muted:#5B5B5B;
+    --green:#0E7A0D;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;}
+  body{
+    font-family:"Segoe UI",Tahoma,Arial,sans-serif;
+    overflow:hidden;
+    background:#2B579A;
+  }
+  #desktop{position:relative;width:100vw;height:100vh;}
+
+  .desktop-icons{
+    position:absolute;top:18px;left:18px;display:flex;flex-direction:column;gap:22px;
+  }
+  .dicon{
+    display:flex;flex-direction:column;align-items:center;gap:5px;width:84px;cursor:pointer;
+    padding:6px;border-radius:4px;
+  }
+  .dicon:hover{background:rgba(255,255,255,.12);}
+  .dicon .box{
+    width:42px;height:42px;background:rgba(255,255,255,.92);border-radius:6px;
+    display:flex;align-items:center;justify-content:center;font-size:22px;
+  }
+  .dicon span{font-size:11.5px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.7);text-align:center;line-height:1.3;}
+
+  .taskbar{
+    position:absolute;bottom:0;left:0;right:0;height:48px;
+    background:rgba(25,25,30,.55);backdrop-filter:blur(24px);
+    display:flex;align-items:center;justify-content:center;gap:10px;z-index:200;
+  }
+  .tb-btn{width:40px;height:40px;border-radius:6px;display:flex;align-items:center;justify-content:center;}
+  .tb-btn svg{width:20px;height:20px;}
+
+  /* main app window */
+  .win{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:460px;
+    background:var(--dialog-bg);
+    border:1px solid rgba(0,0,0,.35);
+    border-radius:6px;
+    box-shadow:0 20px 60px rgba(0,0,0,.55);
+    overflow:hidden;
+    z-index:100;
+    color:var(--text);
+    display:none;
+  }
+  .win.active{display:block;}
+
+  .win-titlebar{
+    height:34px;background:#F7F7F7;border-bottom:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-between;padding:0 0 0 10px;
+  }
+  .win-title{font-size:12.5px;display:flex;align-items:center;gap:8px;}
+  .win-controls{display:flex;height:100%;}
+  .win-controls button{width:40px;height:100%;border:none;background:none;cursor:pointer;font-size:12px;color:#333;}
+  .win-controls button:hover{background:rgba(0,0,0,.08);}
+  .win-controls button.close-btn:hover{background:#E81123;color:#fff;}
+
+  .win-body{padding:14px;}
+
+  fieldset{
+    border:1px solid var(--border);border-radius:3px;
+    padding:10px 12px 12px 12px;margin:0 0 12px 0;
+  }
+  legend{font-size:12px;padding:0 6px;color:var(--text);}
+
+  .row{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
+  .row:last-child{margin-bottom:0;}
+  .row label{font-size:12px;width:118px;flex-shrink:0;color:var(--text);}
+  .row select, .row input[type=text]{
+    flex:1;font-size:12px;padding:4px 6px;border:1px solid #ACA899;border-radius:2px;
+    background:#fff;font-family:inherit;
+  }
+  .row select:disabled, .row input:disabled{background:#E8E8E4;color:#8A8A85;}
+  .btn-inline{
+    font-size:12px;padding:4px 12px;border:1px solid #ACA899;border-radius:2px;
+    background:linear-gradient(#fff,#EAEAEA);cursor:pointer;
+  }
+  .btn-inline:hover{border-color:var(--accent);}
+  .checkrow{display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:6px;}
+  .checkrow input{width:13px;height:13px;}
+
+  .status-bar{
+    background:#E4E4E4;border:1px solid var(--border);border-radius:3px;
+    padding:10px;margin-bottom:12px;
+  }
+  .status-text{font-size:12.5px;font-weight:600;margin-bottom:8px;text-align:center;color:var(--muted);}
+  .status-text.ready{color:var(--green);}
+  .progress-wrap{background:#fff;border:1px solid var(--border);border-radius:2px;height:20px;overflow:hidden;position:relative;}
+  .progress-fill{height:100%;width:0%;background:linear-gradient(#3AA3FF,#0067C0);transition:width .15s linear;}
+  .progress-pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#1B1B1B;font-weight:600;}
+
+  .log-box{
+    background:#fff;border:1px solid var(--border);border-radius:2px;
+    height:90px;overflow-y:auto;padding:6px 8px;font-family:"Consolas",monospace;
+    font-size:11px;color:#333;line-height:1.5;margin-bottom:12px;white-space:pre-wrap;
+  }
+
+  .btn-row-bottom{display:flex;gap:10px;}
+  .btn-row-bottom .win-btn{flex:1;}
+  .win-btn{
+    font-size:12.5px;padding:7px 0;border:1px solid #ACA899;border-radius:2px;
+    background:linear-gradient(#fff,#EAEAEA);cursor:pointer;
+  }
+  .win-btn:hover{border-color:var(--accent);}
+  .win-btn:disabled{opacity:.5;cursor:default;}
+  .win-btn.primary{background:linear-gradient(#3AA3FF,#0067C0);color:#fff;border-color:#0067C0;}
+  .win-btn.primary:hover{background:linear-gradient(#4CB0FF,#1975C6);}
+  .win-btn.primary:disabled{background:#B9D6EE;border-color:#9EC3E0;color:#eee;}
+
+  /* modal overlays (dialogs) */
+  .modal-overlay{
+    position:absolute;inset:0;background:rgba(0,0,0,.4);
+    display:none;align-items:center;justify-content:center;z-index:150;
+  }
+  .modal-overlay.active{display:flex;}
+  .modal{
+    background:#F7F7F7;border:1px solid rgba(0,0,0,.3);border-radius:6px;
+    box-shadow:0 15px 40px rgba(0,0,0,.5);width:380px;overflow:hidden;
+  }
+  .modal .win-titlebar{background:#F0F0F0;}
+  .modal-body{padding:14px;font-size:12.5px;line-height:1.6;}
+  .modal-footer{display:flex;justify-content:flex-end;gap:8px;padding:10px 14px;background:#F0F0F0;border-top:1px solid var(--border);}
+  .modal-footer .win-btn{min-width:74px;flex:none;}
+
+  /* explorer-style Open dialog */
+  .explorer-modal{width:620px;}
+  .explorer-titlebar{background:#F7F7F7;}
+  .explorer-crumbs{
+    padding:8px 12px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--border);
+    background:#fff;display:flex;align-items:center;gap:4px;
+  }
+  .explorer-crumbs span.crumb-sep{opacity:.5;}
+  .explorer-main{display:flex;height:260px;}
+  .explorer-sidebar{
+    width:170px;flex-shrink:0;background:#F3F3F3;border-right:1px solid var(--border);
+    overflow-y:auto;padding:8px 0;font-size:12px;
+  }
+  .sidebar-heading{padding:6px 12px 4px 12px;color:var(--muted);font-size:11px;font-weight:600;}
+  .sidebar-item{
+    display:flex;align-items:center;gap:8px;padding:6px 12px 6px 20px;cursor:pointer;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .sidebar-item:hover{background:#E5F1FB;}
+  .sidebar-item.active{background:#CCE4F7;}
+  .sidebar-item .si-icon{font-size:14px;flex-shrink:0;}
+  .explorer-content{
+    flex:1;background:#fff;padding:14px;overflow-y:auto;
+  }
+  .content-grid{display:flex;flex-wrap:wrap;gap:14px;align-content:flex-start;}
+  .content-item{
+    width:84px;display:flex;flex-direction:column;align-items:center;gap:5px;
+    cursor:pointer;padding:6px 4px;border-radius:4px;text-align:center;
+  }
+  .content-item:hover{background:#E5F1FB;}
+  .content-item.selected{background:#CCE4F7;}
+  .content-item .ci-icon{font-size:30px;line-height:1;}
+  .content-item span{font-size:11px;word-break:break-word;line-height:1.3;}
+  .empty-folder-msg{color:var(--muted);font-size:12px;padding:20px 4px;}
+  .file-error{color:#A32D2D;font-size:11.5px;margin-top:8px;display:none;}
+  .explorer-footer{
+    display:flex;align-items:center;justify-content:flex-end;gap:8px;
+    padding:10px 14px;background:#F0F0F0;border-top:1px solid var(--border);
+  }
+  .explorer-footer .win-btn{min-width:74px;flex:none;}
+
+  .warn-icon{font-size:26px;flex-shrink:0;}
+  .warn-row{display:flex;gap:12px;align-items:flex-start;}
+
+  ::-webkit-scrollbar{width:8px;}
+  ::-webkit-scrollbar-thumb{background:rgba(0,0,0,.25);border-radius:4px;}
+</style>
+</head>
+<body>
+
+<div id="desktop">
+
+  <div class="desktop-icons">
+    <div class="dicon" ondblclick="openThisPC()"><div class="box">🖥️</div><span>This PC</span></div>
+    <div class="dicon" ondblclick="openWindow('rufus')"><div class="box">💽</div><span>Rufus.exe</span></div>
+    <div class="dicon" ondblclick="iconNotice()"><div class="box">💿</div><span>Win11_24H2_English_x64.iso</span></div>
+    <div class="dicon"><div class="box">🗑️</div><span>Recycle Bin</span></div>
+  </div>
+
+  <!-- Rufus main window -->
+  <div class="win" id="win-rufus">
+    <div class="win-titlebar">
+      <div class="win-title"><span>💽</span><span>Rufus 4.5.2087</span></div>
+      <div class="win-controls">
+        <button title="Minimize">—</button>
+        <button title="Maximize">▢</button>
+        <button class="close-btn" onclick="closeWindow('rufus')" title="Close">✕</button>
+      </div>
+    </div>
+    <div class="win-body">
+
+      <fieldset>
+        <legend>Drive Properties</legend>
+        <div class="row">
+          <label>Device</label>
+          <select disabled>
+            <option>Kingston DataTraveler 3.0 (F:) [32 GB]</option>
+          </select>
+        </div>
+        <div class="row">
+          <label>Boot selection</label>
+          <select disabled id="bootSelect">
+            <option id="bootSelectPlaceholder">Disk or ISO image (Please select)</option>
+          </select>
+          <button class="btn-inline" onclick="openFilePicker()">SELECT</button>
+        </div>
+        <div class="row">
+          <label>Image option</label>
+          <select disabled id="imageOption">
+            <option>Standard Windows installation</option>
+          </select>
+        </div>
+        <div class="row">
+          <label>Partition scheme</label>
+          <select disabled id="partScheme">
+            <option>GPT</option>
+            <option>MBR</option>
+          </select>
+        </div>
+        <div class="row">
+          <label>Target system</label>
+          <select disabled id="targetSys">
+            <option>UEFI (non CSM)</option>
+            <option>BIOS or UEFI</option>
+          </select>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Format Options</legend>
+        <div class="row">
+          <label>Volume label</label>
+          <input type="text" id="volLabel" disabled value="">
+        </div>
+        <div class="row">
+          <label>File system</label>
+          <select disabled id="fsSelect"><option>NTFS</option></select>
+        </div>
+        <div class="row">
+          <label>Cluster size</label>
+          <select disabled><option>4096 bytes (Default)</option></select>
+        </div>
+        <div class="checkrow"><input type="checkbox" checked disabled> Quick format</div>
+        <div class="checkrow"><input type="checkbox" checked disabled> Create extended label and icon files</div>
+      </fieldset>
+
+      <div class="status-bar">
+        <div class="status-text ready" id="statusText">READY</div>
+        <div class="progress-wrap"><div class="progress-fill" id="progressFill"></div><div class="progress-pct" id="progressPct">0%</div></div>
+      </div>
+
+      <div class="log-box" id="logBox">Rufus 4.5.2087 (Portable)
+Windows version: Windows 11 Pro (24H2)
+Syslinux 6.03 / Grub 2.06 modules loaded.
+Located 1 device.</div>
+
+      <div class="btn-row-bottom">
+        <button class="win-btn primary" id="startBtn" disabled onclick="clickStart()">START</button>
+        <button class="win-btn" onclick="alertClose()">CLOSE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Explorer-style "Please select a disk image" dialog -->
+  <div class="modal-overlay" id="modal-filepicker">
+    <div class="modal explorer-modal">
+      <div class="win-titlebar explorer-titlebar">
+        <div class="win-title"><span>📁</span><span>Please select a disk image</span></div>
+        <div class="win-controls"><button class="close-btn" onclick="closeModal('filepicker')">✕</button></div>
+      </div>
+      <div class="explorer-crumbs" id="explorerCrumbs">This PC <span class="crumb-sep">›</span> Desktop</div>
+      <div class="explorer-main">
+        <div class="explorer-sidebar">
+          <div class="sidebar-heading">Quick access</div>
+          <div class="sidebar-item" data-folder="desktop" onclick="switchFolder('desktop')"><span class="si-icon">🖥️</span>Desktop</div>
+          <div class="sidebar-item" data-folder="downloads" onclick="switchFolder('downloads')"><span class="si-icon">⬇️</span>Downloads</div>
+          <div class="sidebar-heading">This PC</div>
+          <div class="sidebar-item" data-folder="desktop" onclick="switchFolder('desktop')"><span class="si-icon">🖥️</span>Desktop</div>
+          <div class="sidebar-item" data-folder="documents" onclick="switchFolder('documents')"><span class="si-icon">📄</span>Documents</div>
+          <div class="sidebar-item" data-folder="downloads" onclick="switchFolder('downloads')"><span class="si-icon">⬇️</span>Downloads</div>
+          <div class="sidebar-item" data-folder="localdisk" onclick="switchFolder('localdisk')"><span class="si-icon">💽</span>Local Disk (C:)</div>
+          <div class="sidebar-heading">Devices and drives</div>
+          <div class="sidebar-item" data-folder="pendrive" onclick="switchFolder('pendrive')"><span class="si-icon">🔌</span>Kingston DataTraveler (F:)</div>
+        </div>
+        <div class="explorer-content">
+          <div class="content-grid" id="contentGrid"></div>
+          <div class="file-error" id="fileError">This isn't a supported disk image. Choose an .iso file.</div>
+        </div>
+      </div>
+      <div class="explorer-footer">
+        <button class="win-btn" id="openFileBtn" disabled onclick="confirmFileSelect()">Open</button>
+        <button class="win-btn" onclick="closeModal('filepicker')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scanning ISO tiny modal -->
+  <div class="modal-overlay" id="modal-scanning">
+    <div class="modal" style="width:300px;">
+      <div class="modal-body" style="text-align:center;padding:22px;">
+        Scanning image…
+      </div>
+    </div>
+  </div>
+
+  <!-- Windows User Experience dialog -->
+  <div class="modal-overlay" id="modal-wue">
+    <div class="modal" style="width:420px;">
+      <div class="win-titlebar">
+        <div class="win-title"><span>🪟</span><span>Windows User Experience</span></div>
+        <div class="win-controls"><button class="close-btn" onclick="closeModal('wue')">✕</button></div>
+      </div>
+      <div class="modal-body">
+        <div style="font-weight:600;margin-bottom:8px;">Customize Windows installation</div>
+        <div class="checkrow"><input type="checkbox" id="wue1" checked> Remove requirement for 4GB+ RAM, Secure Boot and TPM 2.0</div>
+        <div class="checkrow"><input type="checkbox" id="wue2" checked> Remove requirement for an online Microsoft account</div>
+        <div class="checkrow"><input type="checkbox" id="wue3" checked> Disable data collection (Skip privacy questions)</div>
+        <div class="checkrow"><input type="checkbox" id="wue4" checked onchange="toggleLocalUserField(this.checked)"> Create a local account with username:</div>
+        <div class="row" style="margin-left:19px;">
+          <input type="text" id="localUserName" value="User" style="max-width:200px;">
+        </div>
+        <div class="checkrow"><input type="checkbox" id="wue5" checked> Set regional options to match this user's</div>
+      </div>
+      <div class="modal-footer">
+        <button class="win-btn primary" style="background:linear-gradient(#3AA3FF,#0067C0);color:#fff;" onclick="confirmWue()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Destroy data warning -->
+  <div class="modal-overlay" id="modal-warn">
+    <div class="modal" style="width:400px;">
+      <div class="win-titlebar">
+        <div class="win-title"><span>⚠️</span><span>Rufus</span></div>
+        <div class="win-controls"><button class="close-btn" onclick="closeModal('warn')">✕</button></div>
+      </div>
+      <div class="modal-body">
+        <div class="warn-row">
+          <div class="warn-icon">⚠️</div>
+          <div>
+            ALL DATA ON DEVICE <strong>'Kingston DataTraveler 3.0 (F:)'</strong> WILL BE DESTROYED.<br><br>
+            Click OK to continue, or CANCEL to abort.
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="win-btn primary" style="background:linear-gradient(#3AA3FF,#0067C0);color:#fff;" onclick="confirmWrite()">OK</button>
+        <button class="win-btn" onclick="closeModal('warn')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Generic tiny notice modal (This PC / desktop icon dblclick) -->
+  <div class="modal-overlay" id="modal-notice">
+    <div class="modal" style="width:340px;">
+      <div class="win-titlebar">
+        <div class="win-title"><span id="noticeIcon">ℹ️</span><span id="noticeTitle">Notice</span></div>
+        <div class="win-controls"><button class="close-btn" onclick="closeModal('notice')">✕</button></div>
+      </div>
+      <div class="modal-body" id="noticeBody"></div>
+      <div class="modal-footer">
+        <button class="win-btn primary" style="background:linear-gradient(#3AA3FF,#0067C0);color:#fff;" onclick="closeModal('notice')">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="taskbar">
+    <div class="tb-btn"><svg viewBox="0 0 88 88" fill="#fff"><rect x="0" y="0" width="41" height="41"/><rect x="47" y="0" width="41" height="41"/><rect x="0" y="47" width="41" height="41"/><rect x="47" y="47" width="41" height="41"/></svg></div>
+  </div>
+
+</div>
+
+<script>
+/* ---- window helpers ---- */
+function openWindow(name){ document.getElementById('win-'+name).classList.add('active'); }
+function closeWindow(name){ document.getElementById('win-'+name).classList.remove('active'); }
+function closeModal(name){ document.getElementById('modal-'+name).classList.remove('active'); }
+
+function openThisPC(){
+  showNotice('🖥️', 'This PC', 'Devices and drives: Local Disk (C:), Kingston DataTraveler (F:) [32 GB] — your USB pendrive is connected and ready.');
+}
+function iconNotice(){
+  showNotice('💿', 'Win11_24H2_English_x64.iso', 'This is the Windows 11 ISO sitting on your Desktop. Open Rufus and use SELECT to choose it.');
+}
+function showNotice(icon, title, body){
+  document.getElementById('noticeIcon').textContent = icon;
+  document.getElementById('noticeTitle').textContent = title;
+  document.getElementById('noticeBody').textContent = body;
+  document.getElementById('modal-notice').classList.add('active');
+}
+
+/* ---- explorer folder contents ---- */
+const folders = {
+  desktop: [
+    {name:'Win11_24H2_English_x64.iso', icon:'💿', type:'iso'},
+    {name:'Rufus.exe', icon:'💽', type:'exe'}
+  ],
+  downloads: [
+    {name:'ubuntu-24.04-desktop-amd64.iso', icon:'💿', type:'iso'},
+    {name:'driver_pack_v3.zip', icon:'🗜️', type:'zip'}
+  ],
+  documents: [],
+  localdisk: [],
+  pendrive: []
+};
+
+let selectedFile = null;
+
+function switchFolder(key){
+  document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item[data-folder="'+key+'"]').forEach(i=>i.classList.add('active'));
+  const labelMap = {
+    desktop:'Desktop', downloads:'Downloads', documents:'Documents',
+    localdisk:'Local Disk (C:)', pendrive:'Kingston DataTraveler (F:)'
+  };
+  document.getElementById('explorerCrumbs').innerHTML = 'This PC <span class="crumb-sep">›</span> ' + labelMap[key];
+
+  selectedFile = null;
+  document.getElementById('openFileBtn').disabled = true;
+  document.getElementById('fileError').style.display = 'none';
+
+  const grid = document.getElementById('contentGrid');
+  const content = grid.parentElement;
+  content.querySelectorAll('.empty-folder-msg').forEach(e=>e.remove());
+
+  const items = folders[key];
+  if(!items || items.length === 0){
+    grid.innerHTML = '';
+    const msg = document.createElement('div');
+    msg.className = 'empty-folder-msg';
+    msg.textContent = key === 'pendrive'
+      ? 'This drive is empty. Insert media or copy files to it.'
+      : 'This folder is empty.';
+    content.insertBefore(msg, document.getElementById('fileError'));
+    return;
+  }
+  grid.innerHTML = items.map(f =>
+    `<div class="content-item" data-name="${f.name}" data-type="${f.type}" onclick="selectContentItem(this)">
+       <div class="ci-icon">${f.icon}</div><span>${f.name}</span>
+     </div>`
+  ).join('');
+}
+
+function selectContentItem(el){
+  document.querySelectorAll('.content-item').forEach(i=>i.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedFile = {name: el.dataset.name, type: el.dataset.type};
+  document.getElementById('openFileBtn').disabled = false;
+  document.getElementById('fileError').style.display = 'none';
+}
+
+function openFilePicker(){
+  document.getElementById('modal-filepicker').classList.add('active');
+  switchFolder('desktop');
+}
+
+function confirmFileSelect(){
+  if(!selectedFile) return;
+  if(selectedFile.type !== 'iso'){
+    document.getElementById('fileError').style.display = 'block';
+    return;
+  }
+  const fname = selectedFile.name;
+  const isWin11 = fname.includes('Win11');
+  closeModal('filepicker');
+
+  document.getElementById('modal-scanning').classList.add('active');
+  setTimeout(()=>{
+    document.getElementById('modal-scanning').classList.remove('active');
+    document.getElementById('bootSelectPlaceholder').textContent = fname;
+    appendLog('Using image: ' + fname);
+
+    if(isWin11){
+      document.getElementById('volLabel').value = 'Windows 11 24H2 English x64';
+      document.getElementById('imageOption').disabled = false;
+      document.getElementById('partScheme').disabled = false;
+      document.getElementById('targetSys').disabled = false;
+      document.getElementById('volLabel').disabled = false;
+      document.getElementById('fsSelect').disabled = false;
+      document.getElementById('startBtn').disabled = false;
+      appendLog('Windows 11 detected — image supports UEFI.');
+      appendLog('Partition scheme: GPT, Target system: UEFI (non CSM)');
+    } else {
+      document.getElementById('volLabel').value = 'UBUNTU_24_04';
+      document.getElementById('volLabel').disabled = false;
+      document.getElementById('startBtn').disabled = false;
+      appendLog('Non-Windows ISO detected.');
+    }
+  }, 1100);
+}
+
+function appendLog(line){
+  const box = document.getElementById('logBox');
+  box.textContent += '\n' + line;
+  box.scrollTop = box.scrollHeight;
+}
+
+function toggleLocalUserField(checked){
+  document.getElementById('localUserName').disabled = !checked;
+}
+
+function clickStart(){
+  document.getElementById('modal-wue').classList.add('active');
+}
+
+function confirmWue(){
+  closeModal('wue');
+  const uname = document.getElementById('localUserName').value.trim() || 'User';
+  appendLog('Windows User Experience: bypass Secure Boot/TPM/RAM checks = ' + document.getElementById('wue1').checked);
+  appendLog('Bypass online Microsoft account requirement = ' + document.getElementById('wue2').checked);
+  if(document.getElementById('wue4').checked){
+    appendLog('Local account will be created: ' + uname);
+  }
+  document.getElementById('modal-warn').classList.add('active');
+}
+
+function confirmWrite(){
+  closeModal('warn');
+  runFormatAndCopy();
+}
+
+function runFormatAndCopy(){
+  document.getElementById('startBtn').disabled = true;
+  const statusText = document.getElementById('statusText');
+  const fill = document.getElementById('progressFill');
+  const pct = document.getElementById('progressPct');
+  statusText.classList.remove('ready');
+
+  const stages = [
+    {upto:15, label:'Formatting (NTFS)...'},
+    {upto:25, label:'Creating file system...'},
+    {upto:35, label:'Setting up for UEFI:NTFS...'},
+    {upto:85, label:'Copying ISO files...'},
+    {upto:97, label:'Applying Windows User Experience patch...'},
+    {upto:100, label:'Finalizing, please wait...'}
+  ];
+  let stageIdx = 0;
+  let p = 0;
+  statusText.textContent = stages[0].label;
+  appendLog(stages[0].label);
+
+  const timer = setInterval(()=>{
+    p += 2;
+    if(p > 100) p = 100;
+    fill.style.width = p + '%';
+    pct.textContent = p + '%';
+
+    if(stageIdx < stages.length - 1 && p >= stages[stageIdx].upto){
+      stageIdx++;
+      statusText.textContent = stages[stageIdx].label;
+      appendLog(stages[stageIdx].label);
+    }
+
+    if(p >= 100){
+      clearInterval(timer);
+      statusText.textContent = 'READY';
+      statusText.classList.add('ready');
+      appendLog('Done.');
+      document.getElementById('startBtn').disabled = false;
+    }
+  }, 90);
+}
+
+function alertClose(){
+  appendLog('(Simulation) Close clicked — reload the page to run again.');
+}
+</script>
+
+</body>
+</html>
