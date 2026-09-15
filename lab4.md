@@ -27,3 +27,5 @@ To verify this step was successful, your computer will boot into a blue screen t
 4.Select the Restore Point:Wizard Options.Click Next on the welcome screen. Click on the specific restore point you want to use (such as your manual "smec" point) to highlight it in blue, then click Next. You can verify you chose the right one by checking the date, time, and description on the final "Confirm your restore point" screen.
 
 5.Start the Restoration:Do not interrupt.Click Finish, and then click Yes on the final warning popup that tells you the process cannot be interrupted. To verify the restoration has successfully started, a progress bar will appear showing initialization and file restoration, followed by an automatic system restart.
+
+[CLICK HERE TO ACCESSS THE LAB](https://tibinjohn193-blip.github.io/windows-11/LAB%204%20restore%20os%20using%20ytem%20restore%20point%20%20.html)
