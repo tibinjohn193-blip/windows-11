@@ -20,8 +20,7 @@ windows 11 pro iso Download
 
 https://getintopc.com/?s=windows+11
 
-[open Lab1](https://github.com/tibinjohn193-blip/windows-11/blob/main/lab%201%20rufus-win11-usb-simulation.html)
-
+[open Lab1](https://tibinjohn193-blip.github.io/windows-11/lab%201%20rufus-win11-usb-simulation.html)
 🧩 Lab 2 — Windows 11 Pro Setup (Offline Account)
 
 File: lab 2 win11-pro-offline-setup-simulation(1).html
