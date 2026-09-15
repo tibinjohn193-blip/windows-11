@@ -1,26 +1,11 @@
 Windows 11 Study Labs
 
 Interactive, browser-based simulations of common Windows 11 Pro setup and administration tasks. Built for learning and practice — no VM, no ISO, no risk to a real machine. Each lab is a single self-contained HTML file with no build step or dependencies; just open it in a browser.
-🛠️ Lab 1 — Bootable USB with Rufus
 
-File: Booting windows 11 pro to USB(CReating BOOtable pendrive)
 
-Simulates using Rufus to write a Windows 11 ISO onto a USB drive. 
+[🛠️ Lab 1 — Bootable USB with Rufus](lab1.md)
 
-Requirements
 
-RUFUS
-
-Rufus is a free, open-source Windows utility for creating bootable USB drives — most commonly used to put an operating system installer (like Windows or a Linux distro) onto a USB flash drive so you can boot from it and install the OS.
-click The below Link to Download Rufus
-
-https://rufus.ie/en/
-
-windows 11 pro iso Download
-
-https://getintopc.com/?s=windows+11
-
-[open Lab1](https://tibinjohn193-blip.github.io/windows-11/lab%201%20rufus-win11-usb-simulation.html)
 🧩 Lab 2 — Windows 11 Pro Setup (Offline Account)
 
 File: lab 2 win11-pro-offline-setup-simulation(1).html
