@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Create a Restore Point — Windows 11 Pro Simulation</title>
+<style>
+  :root{
+    --titlebar:#F3F3F3;
+    --dialog-bg:#F3F3F3;
+    --content-bg:#FFFFFF;
+    --border:#D0D0D0;
+    --accent:#0067C0;
+    --text:#1B1B1B;
+    --muted:#5B5B5B;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;}
+  body{
+    font-family:"Segoe UI",Tahoma,Arial,sans-serif;
+    overflow:hidden;
+    background:linear-gradient(160deg,#2E5FA3,#12305E 55%, #081B3A);
+  }
+  #desktop{
+    position:relative;width:100vw;height:100vh;
+  }
+  .desktop-icons{
+    position:absolute;top:20px;left:20px;display:flex;flex-direction:column;gap:20px;
+  }
+  .dicon{
+    display:flex;flex-direction:column;align-items:center;gap:4px;width:80px;cursor:pointer;
+  }
+  .dicon .box{width:40px;height:40px;background:rgba(255,255,255,.9);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:20px;}
+  .dicon span{font-size:11.5px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.7);text-align:center;}
+
+  /* taskbar */
+  .taskbar{
+    position:absolute;bottom:0;left:0;right:0;height:48px;
+    background:rgba(25,25,30,.55);
+    backdrop-filter:blur(24px);
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    z-index:200;
+  }
+  .tb-btn{
+    display:flex;align-items:center;justify-content:center;
+    width:40px;height:40px;border-radius:6px;cursor:pointer;
+  }
+  .tb-btn:hover{background:rgba(255,255,255,.12);}
+  .tb-btn svg{width:20px;height:20px;}
+  .search-box{
+    display:flex;align-items:center;gap:8px;
+    background:rgba(255,255,255,.12);
+    border-radius:20px;
+    padding:0 14px;height:36px;width:280px;
+    cursor:text;color:rgba(255,255,255,.85);font-size:13px;
+  }
+  .search-box svg{width:14px;height:14px;flex-shrink:0;opacity:.8;}
+
+  /* search flyout */
+  .search-flyout{
+    position:absolute;bottom:56px;left:50%;transform:translateX(-50%) translateY(10px);
+    width:560px;max-width:90vw;
+    background:rgba(246,246,248,.98);
+    border:1px solid rgba(0,0,0,.08);
+    border-radius:8px;
+    box-shadow:0 12px 40px rgba(0,0,0,.35);
+    padding:16px;
+    opacity:0;pointer-events:none;
+    transition:opacity .2s ease, transform .2s ease;
+    z-index:210;
+    color:#1B1B1B;
+  }
+  .search-flyout.active{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0);}
+  .search-input-row{
+    display:flex;align-items:center;gap:10px;
+    background:#fff;border:1px solid #D0D0D0;border-radius:6px;
+    padding:8px 12px;margin-bottom:14px;
+  }
+  .search-input-row svg{width:15px;height:15px;opacity:.6;flex-shrink:0;}
+  #searchTypedText{font-size:14px;min-height:18px;}
+  #searchTypedText .cursor{display:inline-block;width:1px;background:#1B1B1B;margin-left:1px;animation:blink 1s step-start infinite;}
+  @keyframes blink{50%{opacity:0;}}
+  .search-section-label{font-size:11.5px;color:var(--muted);margin:4px 0 6px 4px;font-weight:600;}
+  .search-result{
+    display:flex;align-items:center;gap:12px;
+    padding:10px 10px;border-radius:6px;cursor:pointer;
+    opacity:0;transform:translateY(4px);
+    transition:opacity .25s ease, transform .25s ease, background .12s;
+  }
+  .search-result.show{opacity:1;transform:translateY(0);}
+  .search-result:hover, .search-result.hovered{background:rgba(0,0,0,.06);}
+  .search-result .r-icon{width:32px;height:32px;background:#fff;border:1px solid #D0D0D0;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+  .search-result .r-title{font-size:13.5px;font-weight:500;}
+  .search-result .r-sub{font-size:11.5px;color:var(--muted);}
+
+  /* generic window */
+  .win{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:560px;
+    background:var(--dialog-bg);
+    border:1px solid rgba(0,0,0,.2);
+    border-radius:8px;
+    box-shadow:0 20px 60px rgba(0,0,0,.5);
+    overflow:hidden;
+    display:none;
+    z-index:100;
+    color:var(--text);
+  }
+  .win.active{display:block;}
+  .win-titlebar{
+    height:38px;background:var(--titlebar);
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0 0 0 12px;
+    border-bottom:1px solid var(--border);
+  }
+  .win-title{font-size:12.5px;display:flex;align-items:center;gap:8px;}
+  .win-title .ico{font-size:14px;}
+  .win-controls{display:flex;height:100%;}
+  .win-controls button{
+    width:44px;height:100%;border:none;background:none;cursor:pointer;font-size:13px;color:#333;
+  }
+  .win-controls button:hover{background:rgba(0,0,0,.08);}
+  .win-controls button.close-btn:hover{background:#E81123;color:#fff;}
+
+  .win-body{padding:18px 22px;background:var(--content-bg);}
+
+  /* tabs */
+  .tabstrip{
+    display:flex;gap:2px;padding:10px 18px 0 18px;background:var(--dialog-bg);
+    border-bottom:1px solid var(--border);
+  }
+  .tab{
+    padding:8px 14px;font-size:12.5px;border:1px solid transparent;border-bottom:none;
+    border-radius:4px 4px 0 0;cursor:default;color:var(--muted);
+  }
+  .tab.active{background:var(--content-bg);color:var(--text);border-color:var(--border);position:relative;top:1px;}
+
+  .section-title{font-size:13px;font-weight:600;margin:0 0 8px 0;}
+  .section-desc{font-size:12px;color:var(--muted);line-height:1.5;margin:0 0 14px 0;}
+  hr.sep{border:none;border-top:1px solid var(--border);margin:14px 0;}
+
+  table.drives{width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:6px;}
+  table.drives th{text-align:left;font-weight:600;padding:6px 4px;border-bottom:1px solid var(--border);}
+  table.drives td{padding:8px 4px;border-bottom:1px solid #EEE;}
+  .status-on{color:#0E7A0D;font-weight:600;}
+  .status-off{color:#8A8A8A;}
+
+  .btn-row-right{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;}
+  .win-btn{
+    font-family:inherit;font-size:12.5px;
+    background:#FFFFFF;border:1px solid #ADADAD;border-radius:4px;
+    padding:6px 18px;cursor:pointer;min-width:76px;
+  }
+  .win-btn:hover{border-color:#0067C0;}
+  .win-btn:active{background:#E5E5E5;}
+  .win-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .win-btn.primary:hover{background:#1975C6;}
+  .win-btn:disabled{opacity:.45;cursor:default;border-color:#D0D0D0;background:#F3F3F3;color:#999;}
+
+  .dialog-footer{
+    display:flex;justify-content:flex-end;gap:8px;
+    padding:12px 18px;background:var(--dialog-bg);border-top:1px solid var(--border);
+  }
+
+  .field-block{margin-bottom:14px;}
+  .field-block label{display:block;font-size:12.5px;margin-bottom:6px;}
+  .field-block input[type=text]{
+    width:100%;padding:7px 9px;font-size:13px;border:1px solid #ADADAD;border-radius:3px;
+    font-family:inherit;
+  }
+  .field-block input[type=text]:focus{outline:1px solid var(--accent);border-color:var(--accent);}
+
+  .small-win{width:400px;}
+  .center-body{display:flex;flex-direction:column;align-items:center;text-align:center;padding:26px 22px;}
+  .icon-64{width:48px;height:48px;margin-bottom:14px;}
+  .progress-bar-wrap{width:100%;background:#E4E4E4;border-radius:6px;height:8px;overflow:hidden;margin:14px 0 4px 0;}
+  .progress-bar{height:100%;width:0%;background:var(--accent);transition:width .3s linear;}
+
+  .rp-list{max-height:180px;overflow-y:auto;border:1px solid var(--border);margin:10px 0;}
+  .rp-row{display:flex;justify-content:space-between;padding:8px 10px;font-size:12px;border-bottom:1px solid #EEE;}
+  .rp-row:last-child{border-bottom:none;}
+  .rp-row.new{background:#EAF3FF;}
+
+  ::-webkit-scrollbar{width:8px;}
+  ::-webkit-scrollbar-thumb{background:rgba(0,0,0,.25);border-radius:4px;}
+
+  .ctx-item{padding:7px 12px;border-radius:4px;cursor:pointer;color:#1B1B1B;}
+  .ctx-item:hover{background:#E5F1FB;}
+
+  .spec-table{width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:16px;}
+  .spec-table td{padding:5px 4px;vertical-align:top;}
+  .spec-table td.k{color:var(--muted);width:180px;}
+  .spec-table td.v{font-weight:500;}
+  .related-links{border-top:1px solid var(--border);padding-top:10px;}
+  .related-link{
+    display:block;padding:7px 2px;font-size:12.5px;color:var(--accent);
+    text-decoration:none;cursor:pointer;
+  }
+  .related-link:hover{text-decoration:underline;}
+  .related-link.disabled{color:#8A8A8A;cursor:default;text-decoration:none;pointer-events:none;}
+
+  .drive-row.selected{background:#CCE4F7;}
+  .drive-row:hover{background:#E5F1FB;}
+
+  .radio-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:10px;font-size:12.5px;cursor:pointer;}
+  .radio-row input{margin-top:2px;}
+  .slider-row{display:flex;align-items:center;gap:10px;margin:12px 0;}
+  .slider-row input[type=range]{flex:1;}
+  .disk-usage-bar{background:#E4E4E4;border:1px solid var(--border);border-radius:3px;height:14px;overflow:hidden;margin:6px 0 4px 0;}
+  .disk-usage-fill{height:100%;background:var(--accent);}
+</style>
+</head>
+<body>
+
+<div id="desktop">
+  <div class="desktop-icons">
+    <div class="dicon" oncontextmenu="showThisPCMenu(event)" ondblclick="openWindow('aboutInfo')"><div class="box">🖥️</div><span>This PC</span></div>
+    <div class="dicon"><div class="box">🗑️</div><span>Recycle Bin</span></div>
+  </div>
+
+  <!-- Right-click context menu for This PC -->
+  <div id="thisPcMenu" style="display:none;position:absolute;z-index:250;background:#F3F3F3;border:1px solid rgba(0,0,0,.25);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.4);padding:5px;min-width:190px;font-size:12.5px;">
+    <div class="ctx-item" onclick="hideThisPCMenu()">Open</div>
+    <div class="ctx-item" onclick="hideThisPCMenu()">Pin to Quick access</div>
+    <div class="ctx-item" onclick="hideThisPCMenu()">Map network drive...</div>
+    <div style="border-top:1px solid #D8D8D8;margin:4px 0;"></div>
+    <div class="ctx-item" onclick="hideThisPCMenu();openWindow('aboutInfo')" style="font-weight:600;">Properties</div>
+  </div>
+
+  <!-- Search flyout -->
+  <div class="search-flyout" id="searchFlyout">
+    <div class="search-input-row">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <div id="searchTypedText"><span class="cursor">&nbsp;</span></div>
+    </div>
+    <div class="search-section-label">Best match</div>
+    <div class="search-result" id="searchResult" onclick="selectSearchResult()">
+      <div class="r-icon">🛡️</div>
+      <div>
+        <div class="r-title">Create a restore point</div>
+        <div class="r-sub">Control panel</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- About / System info window (opened via This PC > Properties) -->
+  <div class="win" id="win-aboutInfo" style="width:560px;">
+    <div class="win-titlebar">
+      <div class="win-title"><span class="ico">ℹ️</span><span>About</span></div>
+      <div class="win-controls">
+        <button title="Minimize">—</button>
+        <button title="Maximize">▢</button>
+        <button class="close-btn" onclick="closeWindow('aboutInfo')" title="Close">✕</button>
+      </div>
+    </div>
+    <div class="win-body">
+      <div class="section-title">Device specifications</div>
+      <table class="spec-table">
+        <tr><td class="k">Device name</td><td class="v">DESKTOP-8K3QF2L</td></tr>
+        <tr><td class="k">Processor</td><td class="v">Intel(R) Core(TM) i5-12400 @ 2.50GHz</td></tr>
+        <tr><td class="k">Installed RAM</td><td class="v">16.0 GB (15.8 GB usable)</td></tr>
+        <tr><td class="k">Device ID</td><td class="v">7C4E2A91-3B6D-4F0A-9E12-D8F5A6C31B02</td></tr>
+        <tr><td class="k">Product ID</td><td class="v">00330-80000-00000-AAOEM</td></tr>
+        <tr><td class="k">System type</td><td class="v">64-bit operating system, x64-based processor</td></tr>
+      </table>
+
+      <div class="section-title">Windows specifications</div>
+      <table class="spec-table">
+        <tr><td class="k">Edition</td><td class="v">Windows 11 Pro</td></tr>
+        <tr><td class="k">Version</td><td class="v">24H2</td></tr>
+        <tr><td class="k">Installed on</td><td class="v">9/1/2026</td></tr>
+        <tr><td class="k">OS build</td><td class="v">26100.2033</td></tr>
+        <tr><td class="k">Experience</td><td class="v">Windows Feature Experience Pack 1000.26100.2033.0</td></tr>
+      </table>
+
+      <div class="related-links">
+        <span class="section-title" style="display:block;margin-bottom:6px;">Related links</span>
+        <a class="related-link disabled">Domain or workgroup</a>
+        <a class="related-link disabled">Advanced system settings</a>
+        <a class="related-link disabled">BitLocker settings</a>
+        <a class="related-link" onclick="closeWindow('aboutInfo');openWindow('sysProps')">System protection</a>
+        <a class="related-link disabled">Remote settings</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- System Properties window -->
+  <div class="win" id="win-sysProps" style="width:600px;">
+    <div class="win-titlebar">
+      <div class="win-title"><span class="ico">🖥️</span><span>System Properties</span></div>
+      <div class="win-controls">
+        <button title="Minimize">—</button>
+        <button title="Maximize">▢</button>
+        <button class="close-btn" onclick="closeWindow('sysProps')" title="Close">✕</button>
+      </div>
+    </div>
+    <div class="tabstrip">
+      <div class="tab">Computer Name</div>
+      <div class="tab">Hardware</div>
+      <div class="tab">Advanced</div>
+      <div class="tab active">System Protection</div>
+      <div class="tab">Remote</div>
+    </div>
+    <div class="win-body">
+      <div class="section-title">System Restore</div>
+      <div class="section-desc">System Restore can help fix problems by restoring your computer to a previous point in time.</div>
+      <button class="win-btn" onclick="openWindow('sysRestoreWizard')">System Restore...</button>
+
+      <hr class="sep">
+
+      <div class="section-title">Protection Settings</div>
+      <table class="drives">
+        <tr><th>Drive</th><th>Protection</th></tr>
+        <tr class="drive-row selected" data-drive="C" onclick="selectDriveRow(this)" style="cursor:pointer;"><td>Local Disk (C:) (System)</td><td class="status-on">On</td></tr>
+        <tr class="drive-row" data-drive="D" onclick="selectDriveRow(this)" style="cursor:pointer;"><td>Data (D:)</td><td class="status-off">Off</td></tr>
+      </table>
+      <div class="btn-row-right" style="margin-top:10px;">
+        <button class="win-btn" onclick="openConfigureDialog()">Configure</button>
+        <button class="win-btn" onclick="openCreateDialog()">Create</button>
+      </div>
+    </div>
+    <div class="dialog-footer">
+      <button class="win-btn" onclick="closeWindow('sysProps')">OK</button>
+      <button class="win-btn" onclick="closeWindow('sysProps')">Cancel</button>
+      <button class="win-btn" disabled>Apply</button>
+    </div>
+  </div>
+
+  <!-- Configure dialog (System Protection for selected drive) -->
+  <div class="win small-win" id="win-configureDrive" style="width:420px;">
+    <div class="win-titlebar">
+      <div class="win-title"><span class="ico">🛡️</span><span id="configureTitle">System Protection for Local Disk (C:)</span></div>
+      <div class="win-controls">
+        <button class="close-btn" onclick="closeWindow('configureDrive')" title="Close">✕</button>
+      </div>
+    </div>
+    <div class="win-body">
+      <div class="section-title">Restore Settings</div>
+      <label class="radio-row"><input type="radio" name="protectMode" id="protectOn" checked onchange="toggleProtection()"> Turn on system protection</label>
+      <label class="radio-row"><input type="radio" name="protectMode" id="protectOff" onchange="toggleProtection()"> Disable system protection</label>
+
+      <hr class="sep">
+
+      <div class="section-title">Disk Space Usage</div>
+      <div class="section-desc">You can adjust the maximum disk space used for system protection. As space fills up, older restore points will be deleted to make room for new ones.</div>
+      <div class="disk-usage-bar"><div class="disk-usage-fill" id="diskUsageFill" style="width:9%;"></div></div>
+      <div class="hint" id="diskUsageLabel">Current Usage: 4.2 GB &nbsp;|&nbsp; Max Usage: 9%</div>
+      <div class="slider-row">
+        <input type="range" min="1" max="30" value="9" id="diskUsageSlider" oninput="updateDiskUsage(this.value)">
+      </div>
+      <button class="win-btn" onclick="deleteRestorePoints()">Delete</button>
+      <div class="hint">Delete all restore points (including system settings and previous versions of files) for this drive.</div>
+      <div class="hint" id="deleteConfirmMsg" style="display:none;color:var(--green);font-weight:600;">All restore points for this drive have been deleted.</div>
+    </div>
+    <div class="dialog-footer">
+      <button class="win-btn" onclick="closeWindow('configureDrive')">OK</button>
+      <button class="win-btn" onclick="closeWindow('configureDrive')">Cancel</button>
+      <button class="win-btn" disabled>Apply</button>
+    </div>
+  </div>
+
+  <!-- Create a restore point dialog -->
+  <div class="win small-win" id="win-createRp">
+    <div class="win-titlebar">
+      <div class="win-title"><span class="ico">🛡️</span><span>System Protection</span></div>
+      <div class="win-controls">
+        <button class="close-btn" onclick="closeWindow('createRp')" title="Close">✕</button>
+      </div>
+    </div>
+    <div class="win-body">
+      <div class="section-title">Create a restore point</div>
+      <div class="section-desc">Type a description to help you identify the restore point. The current date and time are added automatically.</div>
+      <div class="field-block">
+        <input type="text" id="rpDescription" placeholder="e.g. Before installing new app">
+      </div>
+    </div>
+    <div class="dialog-footer">
+      <button class="win-btn primary" onclick="beginCreatingRestorePoint()">Create</button>
+      <button class="win-btn" onclick="closeWindow('createRp')">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Please wait dialog -->
+  <div class="win small-win" id="win-waiting">
+    <div class="win-titlebar">
+      <div class="win-title"><span class="ico">🛡️</span><span>System Protection</span></div>
+      <div class="win-controls"></div>
+    </div>
+    <div class="win-body center-body">
+      <div class="section-title" style="margin-bottom:16px;">Please wait while your restore point is being created…</div>
+      <div class="progress-bar-wrap"><div class="progress-bar" id="rpProgressBar"></div></div>
+    </div>
+  </div>
+
+  <!-- Success dialog -->
+  <div class="win small-win" id="win-success">
+    <div class="win-titlebar">
+      <div class="win-title"><span class="ico">🛡️</span><span>System Protection</span></div>
+      <div class="win-controls">
+        <button class="close-btn" onclick="closeWindow('success')" title="Close">✕</button>
+      </div>
+    </div>
+    <div class="win-body center-body">
+      <div style="font-size:34px;margin-bottom:10px;">✅</div>
+      <div class="section-title">The restore point was created successfully.</div>
+    </div>
+    <div class="dialog-footer" style="justify-content:center;">
+      <button class="win-btn primary" onclick="closeWindow('success')">OK</button>
+    </div>
+  </div>
+
+  <!-- System Restore wizard (view restore points) -->
+  <div class="win" id="win-sysRestoreWizard" style="width:560px;">
+    <div class="win-titlebar">
+      <div class="win-title"><span class="ico">🛡️</span><span>System Restore</span></div>
+      <div class="win-controls">
+        <button class="close-btn" onclick="closeWindow('sysRestoreWizard')" title="Close">✕</button>
+      </div>
+    </div>
+    <div class="win-body">
+      <div class="section-title">Restore your computer to the state it was in before the selected event</div>
+      <div class="section-desc">Current time zone: local time. Choose a restore point below.</div>
+      <div class="rp-list" id="rpList">
+        <div class="rp-row"><span id="baselineDate">09/01/2026 10:14:02 AM</span><span>Scheduled Checkpoint</span></div>
+        <div class="rp-row"><span>08/22/2026 6:03:11 PM</span><span>Windows Update</span></div>
+        <div class="rp-row"><span>08/10/2026 9:47:29 AM</span><span>Install: Driver Package Install</span></div>
+      </div>
+      <label style="font-size:12px;display:flex;align-items:center;gap:6px;">
+        <input type="checkbox" id="showMorePoints"> Show more restore points
+      </label>
+    </div>
+    <div class="dialog-footer">
+      <button class="win-btn" onclick="closeWindow('sysRestoreWizard')">Cancel</button>
+      <button class="win-btn" disabled>Next ></button>
+    </div>
+  </div>
+
+  <div class="taskbar">
+    <div class="tb-btn"><svg viewBox="0 0 88 88" fill="#fff"><rect x="0" y="0" width="41" height="41"/><rect x="47" y="0" width="41" height="41"/><rect x="0" y="47" width="41" height="41"/><rect x="47" y="47" width="41" height="41"/></svg></div>
+    <div class="search-box" onclick="openSearch()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <span>Search</span>
+    </div>
+    <div class="tb-btn"><svg viewBox="0 0 24 24" fill="#fff"><rect x="3" y="4" width="18" height="14" rx="2"/></svg></div>
+    <div class="tb-btn"><svg viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="12" r="9"/></svg></div>
+  </div>
+</div>
+
+<script>
+function openWindow(name){
+  document.getElementById('win-'+name).classList.add('active');
+}
+function closeWindow(name){
+  document.getElementById('win-'+name).classList.remove('active');
+}
+
+/* ---- This PC right-click context menu ---- */
+function showThisPCMenu(e){
+  e.preventDefault();
+  const menu = document.getElementById('thisPcMenu');
+  menu.style.left = e.pageX + 'px';
+  menu.style.top = e.pageY + 'px';
+  menu.style.display = 'block';
+}
+function hideThisPCMenu(){
+  document.getElementById('thisPcMenu').style.display = 'none';
+}
+document.getElementById('desktop').addEventListener('click', (e)=>{
+  const menu = document.getElementById('thisPcMenu');
+  if(menu.style.display === 'block' && !menu.contains(e.target)){
+    hideThisPCMenu();
+  }
+});
+document.getElementById('desktop').addEventListener('contextmenu', (e)=>{
+  if(!e.target.closest('.dicon')) hideThisPCMenu();
+});
+
+/* ---- drive selection + Configure dialog ---- */
+let selectedDrive = 'C';
+
+function selectDriveRow(row){
+  document.querySelectorAll('.drive-row').forEach(r=>r.classList.remove('selected'));
+  row.classList.add('selected');
+  selectedDrive = row.dataset.drive;
+}
+
+function openConfigureDialog(){
+  const driveLabel = selectedDrive === 'C' ? 'Local Disk (C:)' : 'Data (D:)';
+  document.getElementById('configureTitle').textContent = 'System Protection for ' + driveLabel;
+
+  const isOn = selectedDrive === 'C';
+  document.getElementById('protectOn').checked = isOn;
+  document.getElementById('protectOff').checked = !isOn;
+  document.getElementById('diskUsageSlider').disabled = !isOn;
+  document.getElementById('deleteConfirmMsg').style.display = 'none';
+  updateDiskUsage(document.getElementById('diskUsageSlider').value);
+
+  openWindow('configureDrive');
+}
+
+function toggleProtection(){
+  const on = document.getElementById('protectOn').checked;
+  document.getElementById('diskUsageSlider').disabled = !on;
+  const row = document.querySelector(`.drive-row[data-drive="${selectedDrive}"] td:last-child`);
+  if(row){
+    row.textContent = on ? 'On' : 'Off';
+    row.className = on ? 'status-on' : 'status-off';
+  }
+}
+
+function updateDiskUsage(val){
+  document.getElementById('diskUsageFill').style.width = val + '%';
+  const gb = (val * 0.47).toFixed(1);
+  document.getElementById('diskUsageLabel').textContent = `Current Usage: 4.2 GB  |  Max Usage: ${val}% (~${gb} GB)`;
+}
+
+function deleteRestorePoints(){
+  document.getElementById('deleteConfirmMsg').style.display = 'block';
+  const list = document.getElementById('rpList');
+  if(list) list.innerHTML = '<div class="rp-row" style="justify-content:center;color:var(--muted);">No restore points on this drive.</div>';
+}
+
+/* ---- search flyout with typing simulation ---- */
+let searchOpened = false;
+function openSearch(){
+  if(searchOpened) return;
+  searchOpened = true;
+  const flyout = document.getElementById('searchFlyout');
+  flyout.classList.add('active');
+  const target = "restore point";
+  const el = document.getElementById('searchTypedText');
+  let i = 0;
+  el.innerHTML = '<span class="cursor">&nbsp;</span>';
+  const typer = setInterval(()=>{
+    i++;
+    el.innerHTML = target.slice(0,i) + '<span class="cursor">&nbsp;</span>';
+    if(i >= target.length){
+      clearInterval(typer);
+      setTimeout(()=>{
+        document.getElementById('searchResult').classList.add('show','hovered');
+      }, 300);
+    }
+  }, 90);
+}
+
+function selectSearchResult(){
+  document.getElementById('searchFlyout').classList.remove('active');
+  openWindow('sysProps');
+}
+
+/* close flyout if clicking elsewhere on desktop */
+document.getElementById('desktop').addEventListener('click', (e)=>{
+  const flyout = document.getElementById('searchFlyout');
+  const box = document.querySelector('.search-box');
+  if(searchOpened && !flyout.contains(e.target) && !box.contains(e.target)){
+    flyout.classList.remove('active');
+    searchOpened = false;
+    document.getElementById('searchResult').classList.remove('show','hovered');
+  }
+});
+
+/* ---- create restore point flow ---- */
+function openCreateDialog(){
+  const today = new Date();
+  const stamp = today.toLocaleDateString('en-US') + ' ' + today.toLocaleTimeString('en-US');
+  document.getElementById('rpDescription').value = '';
+  document.getElementById('rpDescription').placeholder = 'e.g. Before installing new app (' + stamp + ')';
+  openWindow('createRp');
+}
+
+function beginCreatingRestorePoint(){
+  const desc = document.getElementById('rpDescription').value.trim() || 'Manual checkpoint';
+  closeWindow('createRp');
+  openWindow('waiting');
+  const bar = document.getElementById('rpProgressBar');
+  let pct = 0;
+  bar.style.width = '0%';
+  const timer = setInterval(()=>{
+    pct += 4;
+    if(pct > 100) pct = 100;
+    bar.style.width = pct + '%';
+    if(pct >= 100){
+      clearInterval(timer);
+      setTimeout(()=>{
+        closeWindow('waiting');
+        addRestorePointToList(desc);
+        openWindow('success');
+      }, 400);
+    }
+  }, 110);
+}
+
+function addRestorePointToList(desc){
+  const list = document.getElementById('rpList');
+  const now = new Date();
+  const stamp = now.toLocaleDateString('en-US') + ' ' + now.toLocaleTimeString('en-US');
+  const row = document.createElement('div');
+  row.className = 'rp-row new';
+  row.innerHTML = `<span>${stamp}</span><span>${desc}</span>`;
+  list.insertBefore(row, list.firstChild);
+}
+</script>
+
+</body>
+</html>
