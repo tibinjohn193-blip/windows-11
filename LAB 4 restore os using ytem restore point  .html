@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windows 11 System Restore Simulator</title>
+    <style>
+        :root {
+            --win-blue: #0078D7;
+            --winre-bg: #005A9E;
+            --tile-bg: transparent;
+            --tile-hover: rgba(255, 255, 255, 0.1);
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #000;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .screen {
+            display: none;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .active {
+            display: block;
+        }
+
+        /* Desktop Mockup */
+        #screen-desktop, #screen-desktop-success {
+            background: url('https://images.unsplash.com/photo-1617471346061-5d329ab9c574?q=80&w=1920&auto=format&fit=crop') no-repeat center center fixed;
+            background-size: cover;
+        }
+        
+        .start-menu-sim {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(243, 243, 243, 0.85);
+            backdrop-filter: blur(20px);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-desktop {
+            padding: 10px 20px;
+            font-size: 14px;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        .btn-desktop:hover { background: #eee; }
+
+        /* WinRE Environment */
+        .winre {
+            background-color: var(--winre-bg);
+            color: white;
+            padding: 50px;
+            box-sizing: border-box;
+        }
+
+        .winre-title {
+            font-size: 32px;
+            font-weight: 300;
+            margin-bottom: 40px;
+        }
+
+        .tile-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            max-width: 800px;
+        }
+
+        .winre-tile {
+            width: 250px;
+            height: 100px;
+            background-color: var(--tile-bg);
+            border: 2px solid transparent;
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            cursor: pointer;
+            transition: 0.2s;
+            box-sizing: border-box;
+        }
+
+        .winre-tile:hover {
+            background-color: var(--tile-hover);
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        .tile-icon {
+            font-size: 30px;
+            margin-right: 15px;
+        }
+        
+        .tile-text {
+            font-size: 16px;
+        }
+
+        /* Password Screen */
+        .pwd-container { margin-top: 20px; }
+        .pwd-container input {
+            padding: 8px;
+            font-size: 16px;
+            width: 250px;
+            margin-right: 10px;
+        }
+        .pwd-container button {
+            padding: 8px 15px;
+            font-size: 16px;
+            cursor: pointer;
+            background: #444;
+            color: white;
+            border: none;
+        }
+        
+        .pwd-container button:hover { background: #555; }
+        .error-msg { color: #ff8c8c; margin-top: 10px; font-size: 14px; display: none; }
+
+        /* Classic Windows Wizard Window */
+        .wizard-window {
+            width: 550px;
+            height: 450px;
+            background: #fff;
+            color: #000;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 1px solid #0078D7;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .wizard-header {
+            background: white;
+            padding: 10px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+        }
+        .wizard-header img { width: 16px; height: 16px; margin-right: 5px; }
+
+        .wizard-content {
+            padding: 20px;
+            flex-grow: 1;
+            font-size: 13px;
+        }
+
+        .wizard-footer {
+            background: #F0F0F0;
+            padding: 15px;
+            text-align: right;
+            border-top: 1px solid #dfdfdf;
+        }
+
+        .wizard-footer button {
+            padding: 5px 15px;
+            margin-left: 10px;
+            min-width: 75px;
+            cursor: pointer;
+        }
+
+        .wizard-footer button:disabled { color: #888; cursor: not-allowed; }
+
+        /* Restore Point Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            border: 1px solid #ccc;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 5px;
+            text-align: left;
+            font-size: 12px;
+        }
+        th { background: #f9f9f9; }
+        .selectable-row { cursor: pointer; }
+        .selectable-row.selected {
+            background: #0078D7;
+            color: white;
+        }
+
+        /* Dialog overlays */
+        .dialog-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .dialog-box {
+            background: white;
+            color: black;
+            width: 400px;
+            border: 1px solid #0078D7;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        .dialog-title { background: white; padding: 10px; font-size: 12px; border-bottom: 1px solid #eee;}
+        .dialog-content { padding: 20px; font-size: 13px; display: flex; align-items: flex-start;}
+        .dialog-content span { font-size: 30px; color: #d9534f; margin-right: 15px; margin-top: -5px;}
+        .dialog-footer { background: #f0f0f0; padding: 10px; text-align: right; }
+        .dialog-footer button { padding: 5px 15px; margin-left: 5px; cursor: pointer; }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 15px;
+            background: #ddd;
+            margin-top: 20px;
+            border: 1px solid #aaa;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: #0078D7;
+            width: 0%;
+            transition: width 0.5s;
+        }
+        
+        .center-msg {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            color: white;
+            font-size: 24px;
+        }
+        
+        /* Loading Spinner */
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 40px; height: 40px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Success Popup */
+        .success-popup {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. Desktop Start (Trigger) -->
+    <div id="screen-desktop" class="screen active">
+        <div class="start-menu-sim">
+            <h3>Start Simulation</h3>
+            <p>To access WinRE, simulate holding Shift and clicking Restart.</p>
+            <button class="btn-desktop" onclick="goToScreen('screen-loading', 1500, 'screen-winre-main')">
+                (Shift) + Restart
+            </button>
+        </div>
+    </div>
+
+    <!-- Loading Transition Screen -->
+    <div id="screen-loading" class="screen winre">
+        <div class="center-msg">
+            <div class="spinner"></div>
+            Please wait
+        </div>
+    </div>
+
+    <!-- 2. WinRE Main -->
+    <div id="screen-winre-main" class="screen winre">
+        <div class="winre-title">Choose an option</div>
+        <div class="tile-grid">
+            <div class="winre-tile" onclick="alert('This would exit WinRE.')">
+                <div class="tile-icon">⏵</div>
+                <div class="tile-text">Continue<br><small>Exit and continue to Windows 11</small></div>
+            </div>
+            <div class="winre-tile" onclick="alert('USB selection not simulated.')">
+                <div class="tile-icon">💿</div>
+                <div class="tile-text">Use a device<br><small>Use a USB drive, network connection, or Windows recovery DVD</small></div>
+            </div>
+            <div class="winre-tile" onclick="goToScreen('screen-winre-troubleshoot')">
+                <div class="tile-icon">🔧</div>
+                <div class="tile-text">Troubleshoot<br><small>Reset your PC or see advanced options</small></div>
+            </div>
+            <div class="winre-tile" onclick="alert('Shutting down simulator.')">
+                <div class="tile-icon">⏻</div>
+                <div class="tile-text">Turn off your PC</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. WinRE Troubleshoot -->
+    <div id="screen-winre-troubleshoot" class="screen winre">
+        <div style="cursor: pointer; margin-bottom: 20px;" onclick="goToScreen('screen-winre-main')">←</div>
+        <div class="winre-title">Troubleshoot</div>
+        <div class="tile-grid">
+            <div class="winre-tile" onclick="alert('Reset PC not simulated.')">
+                <div class="tile-icon">🔄</div>
+                <div class="tile-text">Reset this PC<br><small>Let's you choose to keep or remove your personal files, and then reinstalls Windows.</small></div>
+            </div>
+            <div class="winre-tile" onclick="goToScreen('screen-winre-advanced')">
+                <div class="tile-icon">⚙️</div>
+                <div class="tile-text">Advanced options</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. WinRE Advanced Options -->
+    <div id="screen-winre-advanced" class="screen winre">
+        <div style="cursor: pointer; margin-bottom: 20px;" onclick="goToScreen('screen-winre-troubleshoot')">←</div>
+        <div class="winre-title">Advanced options</div>
+        <div class="tile-grid">
+            <div class="winre-tile" onclick="alert('Not simulated.')">
+                <div class="tile-icon">🛠️</div>
+                <div class="tile-text">Startup Repair</div>
+            </div>
+            <div class="winre-tile" onclick="alert('Not simulated.')">
+                <div class="tile-icon">⚙️</div>
+                <div class="tile-text">Startup Settings</div>
+            </div>
+            <div class="winre-tile" onclick="alert('Not simulated.')">
+                <div class="tile-icon">C:\</div>
+                <div class="tile-text">Command Prompt</div>
+            </div>
+            <div class="winre-tile" onclick="alert('Not simulated.')">
+                <div class="tile-icon">🗑️</div>
+                <div class="tile-text">Uninstall Updates</div>
+            </div>
+            <div class="winre-tile" onclick="goToScreen('screen-winre-account')">
+                <div class="tile-icon">⏮️</div>
+                <div class="tile-text">System Restore<br><small>Use a restore point recorded on your PC to restore Windows</small></div>
+            </div>
+            <div class="winre-tile" onclick="alert('Not simulated.')">
+                <div class="tile-icon">💾</div>
+                <div class="tile-text">System Image Recovery</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Select Account -->
+    <div id="screen-winre-account" class="screen winre">
+        <div style="cursor: pointer; margin-bottom: 20px;" onclick="goToScreen('screen-winre-advanced')">←</div>
+        <div class="winre-title">System Restore</div>
+        <p>Choose an account to continue.</p>
+        <div class="winre-tile" onclick="goToScreen('screen-winre-password')">
+            <div class="tile-icon">👤</div>
+            <div class="tile-text">admin<br><small>Administrator</small></div>
+        </div>
+    </div>
+
+    <!-- 6. Enter Password -->
+    <div id="screen-winre-password" class="screen winre">
+        <div style="cursor: pointer; margin-bottom: 20px;" onclick="goToScreen('screen-winre-account')">←</div>
+        <div class="winre-title">System Restore</div>
+        <p>Hi admin.</p>
+        <p>Enter the password for this account. (Hint: 123)</p>
+        <div class="pwd-container">
+            <input type="password" id="adminPwd" placeholder="Password" onkeypress="if(event.key === 'Enter') verifyPassword()">
+            <button onclick="verifyPassword()">Continue</button>
+            <div id="pwd-error" class="error-msg">Incorrect password. Please try again.</div>
+        </div>
+    </div>
+
+    <!-- 7. System Restore Wizard (Overlay on WinRE) -->
+    <div id="screen-sr-wizard" class="screen winre">
+        <div class="wizard-window">
+            <div class="wizard-header">
+                💻 System Restore
+            </div>
+            
+            <!-- Wizard Page 1 -->
+            <div id="wizard-page-1" class="wizard-content active">
+                <h2 style="font-size: 16px; color: #003399;">Restore system files and settings</h2>
+                <p>System Restore can help fix problems that might be making your computer run slowly or stop responding.</p>
+                <p>System Restore does not affect any of your documents, pictures, or other personal data. Recently installed programs and drivers might be uninstalled.</p>
+            </div>
+            <div id="wizard-footer-1" class="wizard-footer active">
+                <button onclick="goToScreen('screen-winre-advanced')" style="float: left;">Cancel</button>
+                <button onclick="nextWizard(2)">Next ></button>
+            </div>
+
+            <!-- Wizard Page 2 -->
+            <div id="wizard-page-2" class="wizard-content" style="display:none;">
+                <h2 style="font-size: 16px; color: #003399;">Restore your computer to the state it was in before the selected event</h2>
+                <p>Select a restore point.</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date and Time</th>
+                            <th>Description</th>
+                            <th>Type</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="selectable-row" id="restore-point-row" onclick="selectRow()">
+                            <td id="dynamic-date">9/15/2026 2:30:00 PM</td>
+                            <td>smec</td>
+                            <td>Manual</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div id="wizard-footer-2" class="wizard-footer" style="display:none;">
+                <button onclick="nextWizard(1)"> < Back </button>
+                <button id="btn-next-2" onclick="nextWizard(3)" disabled>Next ></button>
+                <button onclick="goToScreen('screen-winre-advanced')">Cancel</button>
+            </div>
+
+            <!-- Wizard Page 3 -->
+            <div id="wizard-page-3" class="wizard-content" style="display:none;">
+                <h2 style="font-size: 16px; color: #003399;">Confirm your restore point</h2>
+                <p>Your computer will be restored to the state it was in before the event in the Description field below.</p>
+                <p><strong>Time:</strong> <span id="confirm-date">9/15/2026 2:30:00 PM</span></p>
+                <p><strong>Description:</strong> smec</p>
+                <p><strong>Drives:</strong> Local Disk (C:) (System)</p>
+                <br>
+                <p><em>System Restore needs to restart your computer to apply these changes. Before you proceed, save any open files and close all programs.</em></p>
+            </div>
+            <div id="wizard-footer-3" class="wizard-footer" style="display:none;">
+                <button onclick="nextWizard(2)"> < Back </button>
+                <button onclick="showWarning()">Finish</button>
+                <button onclick="goToScreen('screen-winre-advanced')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 8. Warning Dialog Overlay -->
+    <div id="dialog-warning" class="dialog-overlay">
+        <div class="dialog-box">
+            <div class="dialog-title">System Restore</div>
+            <div class="dialog-content">
+                <span>⚠️</span>
+                <div>Once started, System Restore cannot be interrupted. Do you want to continue?</div>
+            </div>
+            <div class="dialog-footer">
+                <button onclick="startRestore()">Yes</button>
+                <button onclick="hideWarning()">No</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 9. Restoring Progress Screen -->
+    <div id="screen-sr-progress" class="screen winre">
+        <div class="wizard-window">
+            <div class="wizard-header">💻 System Restore</div>
+            <div class="wizard-content" style="display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
+                <p id="progress-text">Preparing to restore...</p>
+                <div class="progress-bar-container">
+                    <div id="progress-bar" class="progress-bar"></div>
+                </div>
+                <p style="margin-top: 30px; font-size: 11px;">Please wait while your Windows files and settings are being restored.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 10. Success Screen -->
+    <div id="screen-desktop-success" class="screen">
+        <div class="success-popup">
+            <h2 style="color: green; margin-top:0;">✅ System Restore completed successfully.</h2>
+            <p>The system has been restored to the selected restore point (<strong>smec</strong>).<br>Your documents have not been affected.</p>
+            <button class="btn-desktop" onclick="location.reload()">Close & Restart Simulator</button>
+        </div>
+    </div>
+
+    <script>
+        // Set dynamic date to make it look realistic based on today
+        const today = new Date();
+        const formattedDate = today.toLocaleDateString() + " " + today.toLocaleTimeString();
+        document.getElementById('dynamic-date').innerText = formattedDate;
+        document.getElementById('confirm-date').innerText = formattedDate;
+
+        function goToScreen(screenId, delay = 0, nextScreenId = '') {
+            if(delay > 0) {
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                document.getElementById(screenId).classList.add('active');
+                setTimeout(() => {
+                    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                    document.getElementById(nextScreenId).classList.add('active');
+                }, delay);
+            } else {
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                document.getElementById(screenId).classList.add('active');
+            }
+        }
+
+        function verifyPassword() {
+            const pwd = document.getElementById('adminPwd').value;
+            if(pwd === '123') {
+                document.getElementById('pwd-error').style.display = 'none';
+                goToScreen('screen-sr-wizard');
+            } else {
+                document.getElementById('pwd-error').style.display = 'block';
+            }
+        }
+
+        function nextWizard(pageNum) {
+            // Hide all wizard pages
+            for(let i=1; i<=3; i++){
+                document.getElementById('wizard-page-' + i).style.display = 'none';
+                document.getElementById('wizard-footer-' + i).style.display = 'none';
+            }
+            // Show target
+            document.getElementById('wizard-page-' + pageNum).style.display = 'block';
+            document.getElementById('wizard-footer-' + pageNum).style.display = 'block';
+        }
+
+        function selectRow() {
+            const row = document.getElementById('restore-point-row');
+            row.classList.add('selected');
+            document.getElementById('btn-next-2').disabled = false;
+        }
+
+        function showWarning() {
+            document.getElementById('dialog-warning').style.display = 'flex';
+        }
+
+        function hideWarning() {
+            document.getElementById('dialog-warning').style.display = 'none';
+        }
+
+        function startRestore() {
+            hideWarning();
+            goToScreen('screen-sr-progress');
+            
+            const bar = document.getElementById('progress-bar');
+            const text = document.getElementById('progress-text');
+            
+            setTimeout(() => { bar.style.width = '20%'; text.innerText = 'Initializing...'; }, 1000);
+            setTimeout(() => { bar.style.width = '45%'; text.innerText = 'Restoring files...'; }, 2500);
+            setTimeout(() => { bar.style.width = '80%'; text.innerText = 'Removing temporary files...'; }, 4500);
+            setTimeout(() => { bar.style.width = '100%'; text.innerText = 'Restarting...'; }, 6000);
+            
+            setTimeout(() => {
+                goToScreen('screen-loading', 2000, 'screen-desktop-success');
+            }, 6500);
+        }
+    </script>
+</body>
+</html>
