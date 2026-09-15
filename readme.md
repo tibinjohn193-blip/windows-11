@@ -10,10 +10,14 @@ Simulates using Rufus to write a Windows 11 ISO onto a USB drive.
 Requirements
 RUFUS
 Rufus is a free, open-source Windows utility for creating bootable USB drives — most commonly used to put an operating system installer (like Windows or a Linux distro) onto a USB flash drive so you can boot from it and install the OS.
-click The below to Download Rufus
+click The below Link to Download Rufus
+
 https://rufus.ie/en/
+
 windows 11 pro iso Download
+
 https://getintopc.com/?s=windows+11
+
 ▶ Open Lab 1
 
 🧩 Lab 2 — Windows 11 Pro Setup (Offline Account)
