@@ -11,3 +11,5 @@ Interactive, browser-based simulations of common Windows 11 Pro setup and admini
 
 [🛠️LAB 4 Restore windows 11 os  using Restore Point](lab4.md)
 
+[🛠️LAB 5  windows 11 Disk Management](lab5.md)
+
