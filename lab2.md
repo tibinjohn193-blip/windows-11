@@ -22,7 +22,7 @@ Before Windows Setup launches, technicians must handle physical hardware handoff
 
 1. **Connect USB Drive:** Plug the bootable USB (e.g., *Kingston DataTraveler 3.0, 32GB*) into the target PC. The system confirms detection of a valid Windows 11 boot image.
 2. **Restart & POST:** Trigger a system reboot into the motherboard manufacturer's POST (Power-On Self-Test) screen.
-3. **Access Boot Menu:** Press the manufacturer-specific hotkey (`F12`, `F11`, `Esc`, or `Del`) during the memory test prompt to open the **BIOS Boot Menu**.
+3. **Access Boot Menu:** Press the manufacturer-specific hotkey (`F12`, `F11`,`F9`, `Esc`, or `Del`) during the memory test prompt to open the **BIOS Boot Menu**.
 4. **Select Boot Device:** Choose `UEFI: Kingston DataTraveler 3.0 PMAP` from the blue-screen device list. Selecting incorrect items (like local Windows Boot Manager or network boot) correctly simulates hardware rejection.
 5. **USB Hand-off:** Observe the `Booting from UEFI...` status message transitioning directly into the Windows Setup installer.
 
