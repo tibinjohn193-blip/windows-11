@@ -17,4 +17,4 @@ Interactive, browser-based simulations of common Windows 11 Pro setup and admini
 
 
 [🛠️LAB 7  Windows 11 Remote Desktop Connection (RDP)](lab7.md)
-
+[🛠️LAB: Windows 11 Local User Management (`lusrmgr.msc`)](lab8.md)
