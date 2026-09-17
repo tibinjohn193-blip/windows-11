@@ -22,6 +22,34 @@
   }
   #desktop{position:relative;width:100vw;height:100vh;}
 
+  /* --- INSTRUCTION PANEL STYLES --- */
+  #instruction-panel {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 320px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 3px solid #0067C0;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    z-index: 1000;
+  }
+  #instruction-panel h3 {
+    margin: 0 0 10px 0;
+    font-size: 15px;
+    color: #0067C0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  #instruction-text {
+    margin: 0;
+    font-size: 13px;
+    color: #333;
+    line-height: 1.5;
+  }
+
   .desktop-icons{
     position:absolute;top:18px;left:18px;display:flex;flex-direction:column;gap:22px;
   }
@@ -188,9 +216,15 @@
 
 <div id="desktop">
 
+  <!-- INSTRUCTION PANEL -->
+  <div id="instruction-panel">
+    <h3>📋 Lab Guide</h3>
+    <p id="instruction-text"><b>Step 1:</b> Double-click the <b>Rufus.exe</b> icon on the desktop to open the application.</p>
+  </div>
+
   <div class="desktop-icons">
     <div class="dicon" ondblclick="openThisPC()"><div class="box">🖥️</div><span>This PC</span></div>
-    <div class="dicon" ondblclick="openWindow('rufus')"><div class="box">💽</div><span>Rufus.exe</span></div>
+    <div class="dicon" ondblclick="openRufusApp()"><div class="box">💽</div><span>Rufus.exe</span></div>
     <div class="dicon" ondblclick="iconNotice()"><div class="box">💿</div><span>Win11_24H2_English_x64.iso</span></div>
     <div class="dicon"><div class="box">🗑️</div><span>Recycle Bin</span></div>
   </div>
@@ -368,7 +402,7 @@ Located 1 device.</div>
     </div>
   </div>
 
-  <!-- Generic tiny notice modal (This PC / desktop icon dblclick) -->
+  <!-- Generic tiny notice modal -->
   <div class="modal-overlay" id="modal-notice">
     <div class="modal" style="width:340px;">
       <div class="win-titlebar">
@@ -389,7 +423,16 @@ Located 1 device.</div>
 </div>
 
 <script>
+/* ---- INSTRUCTION HELPER FUNCTION ---- */
+function setInstruction(text) {
+  document.getElementById('instruction-text').innerHTML = text;
+}
+
 /* ---- window helpers ---- */
+function openRufusApp() {
+  document.getElementById('win-rufus').classList.add('active');
+  setInstruction('<b>Step 2:</b> Click the <b>SELECT</b> button to choose the Windows 11 ISO image file.');
+}
 function openWindow(name){ document.getElementById('win-'+name).classList.add('active'); }
 function closeWindow(name){ document.getElementById('win-'+name).classList.remove('active'); }
 function closeModal(name){ document.getElementById('modal-'+name).classList.remove('active'); }
@@ -470,6 +513,7 @@ function selectContentItem(el){
 function openFilePicker(){
   document.getElementById('modal-filepicker').classList.add('active');
   switchFolder('desktop');
+  setInstruction('<b>Step 3:</b> Select <b>Desktop</b> from the sidebar, click on <b>Win11_24H2_English_x64.iso</b> to highlight it, and click <b>Open</b>.');
 }
 
 function confirmFileSelect(){
@@ -498,6 +542,9 @@ function confirmFileSelect(){
       document.getElementById('startBtn').disabled = false;
       appendLog('Windows 11 detected — image supports UEFI.');
       appendLog('Partition scheme: GPT, Target system: UEFI (non CSM)');
+      
+      // Update Instruction Panel for the next step
+      setInstruction('<b>Step 4:</b> The ISO file is loaded. Notice how the settings automatically changed to GPT and UEFI. Now click the blue <b>START</b> button.');
     } else {
       document.getElementById('volLabel').value = 'UBUNTU_24_04';
       document.getElementById('volLabel').disabled = false;
@@ -519,6 +566,7 @@ function toggleLocalUserField(checked){
 
 function clickStart(){
   document.getElementById('modal-wue').classList.add('active');
+  setInstruction('<b>Step 5:</b> Review the <i>Windows User Experience</i> options (these bypass Microsoft account requirements) and click <b>OK</b>.');
 }
 
 function confirmWue(){
@@ -530,6 +578,7 @@ function confirmWue(){
     appendLog('Local account will be created: ' + uname);
   }
   document.getElementById('modal-warn').classList.add('active');
+  setInstruction('<b>Step 6:</b> Warning! Formatting will erase all data on the USB drive. Click <b>OK</b> to proceed.');
 }
 
 function confirmWrite(){
@@ -543,6 +592,8 @@ function runFormatAndCopy(){
   const fill = document.getElementById('progressFill');
   const pct = document.getElementById('progressPct');
   statusText.classList.remove('ready');
+
+  setInstruction('<b>Step 7:</b> Please wait while Rufus formats the drive and copies the Windows installation files...');
 
   const stages = [
     {upto:15, label:'Formatting (NTFS)...'},
@@ -575,6 +626,9 @@ function runFormatAndCopy(){
       statusText.classList.add('ready');
       appendLog('Done.');
       document.getElementById('startBtn').disabled = false;
+      
+      // Final instruction update
+      setInstruction('✅ <b>Lab Complete!</b> The USB drive is now bootable and ready to install Windows 11.');
     }
   }, 90);
 }
