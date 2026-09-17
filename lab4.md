@@ -25,7 +25,7 @@ Follow this sequence to perform a System Restore (based on the lab simulation):
 *   **Verification:** The screen will prompt you to choose an account to continue.
 
 ### 3. Authenticate Your Account
-*   **Action:** Click on your administrator account name (e.g., "admin"), enter your password, and click **Continue**.
+*   **Action:** Click on your administrator account name (e.g., "admin"), enter your password(in our system 123 is the password ), and click **Continue**.
 *   **Verification:** The classic white "System Restore" wizard window will open on your screen.
 
 ### 4. Select the Restore Point
