@@ -53,4 +53,4 @@ An interactive, browser-based simulation of the Windows 11 Disk Management utili
 2. Follow the on-screen instructions in the blue panel at the top.
 3. Interact with the Windows 11 UI, use the 'Run' dialog, and right-click on the disk blocks to perform actions.
 
-[ACESS LAB]()
+[ACESS LAB](https://tibinjohn193-blip.github.io/windows-11/LAB5.html)
