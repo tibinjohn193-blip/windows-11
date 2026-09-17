@@ -1,18 +1,61 @@
-#  lab 2 win11-pro-offline-setup-simulation(1).html
+# Lab 2: Windows 11 Pro Installation & Offline Setup
 
-Walks through the full installer experience end to end: language/keyboard/license screens, disk partition selection (Format, Delete, New), the "Installing Windows" progress screen, and the complete first-boot (OOBE) flow — including the Wi-Fi screen's "I don't have internet" path that lets Windows 11 Pro set up a local account instead of requiring a Microsoft account.
+Welcome to **Lab 2**. This lab walks through the full, end-to-end Windows 11 Pro installation experience on physical hardware, bridging the gap between firmware configuration and the final operating system setup. 
 
+You can interact with the live simulation here:
+👉 [Windows 11 Pro Offline Setup Simulation](https://tibinjohn193-blip.github.io/windows-11/lab%202%20win11-pro-offline-setup-simulation%281%29.html)
 
-## 🔌 Boot Menu Selection & USB Connection (new in Lab 2)
+---
 
-Before the Windows Setup screens even appear, the lab now walks through the real pre-installation sequence a technician goes through on physical hardware:
+## 🎯 Lab Objectives
 
-Connect the USB drive — click to plug the bootable USB (a Kingston DataTraveler 3.0, 32GB) into the PC. The simulation confirms detection and shows that it contains a bootable Windows 11 image.
-Restart the PC — triggers a short "Restarting…" spinner, mimicking the reboot needed to get into firmware.
-BIOS/UEFI splash screen — a classic black POST screen showing the motherboard manufacturer, BIOS version, CPU, and memory test, with a blinking prompt: "Press [F12] for Boot Menu." Clicking it simulates hitting the boot menu hotkey during POST (the exact key varies by manufacturer — F12, F11, Esc, or Del are common).
-BIOS Boot Menu — a proper blue-screen BIOS boot device list, letting you select between the local disk's Windows Boot Manager, the USB drive (shown exactly as firmware reports it: UEFI: Kingston DataTraveler 3.0 PMAP), onboard network boot (IPv4/IPv6), or entering BIOS Setup. Selecting anything other than the USB and pressing Enter does nothing (just like a real BIOS would ignore an incompatible choice for this scenario) — only selecting the USB drive and confirming boots into the installer.
-Booting from USB — a brief "Booting from UEFI: Kingston DataTraveler 3.0 PMAP..." message before handing off into the familiar Windows Setup language screen.
+1. **Pre-Installation & BIOS Navigation:** Master physical hardware handoff by configuring boot order via the motherboard BIOS/UEFI boot menu.
+2. **USB Boot Media Handling:** Properly identify and boot from a physical USB installation medium (Kingston DataTraveler 3.0).
+3. **Disk Partition Management:** Navigate disk selection, partition formatting, deletion, and creating new allocations.
+4. **OOBE & Local Account Configuration:** Bypass forced Microsoft account requirements using the offline ("I don't have internet") workaround in Windows 11 Pro.
 
-This section exists because in the real world, getting a PC to boot from USB is often the part people get stuck on — not because Windows Setup is hard, but because finding the right boot-menu key and correctly identifying the USB drive among BIOS entries trips people up. The lab lets you practice that exact decision point risk-free.
+---
 
-[installing win 11 pro](https://tibinjohn193-blip.github.io/windows-11/lab%202%20win11-pro-offline-setup-simulation%281%29.html)
+## 🔌 Phase 1: Boot Menu Selection & USB Connection (New in Lab 2)
+
+Before Windows Setup launches, technicians must handle physical hardware handoff. This lab simulates that exact pre-installation sequence:
+
+1. **Connect USB Drive:** Plug the bootable USB (e.g., *Kingston DataTraveler 3.0, 32GB*) into the target PC. The system confirms detection of a valid Windows 11 boot image.
+2. **Restart & POST:** Trigger a system reboot into the motherboard manufacturer's POST (Power-On Self-Test) screen.
+3. **Access Boot Menu:** Press the manufacturer-specific hotkey (`F12`, `F11`, `Esc`, or `Del`) during the memory test prompt to open the **BIOS Boot Menu**.
+4. **Select Boot Device:** Choose `UEFI: Kingston DataTraveler 3.0 PMAP` from the blue-screen device list. Selecting incorrect items (like local Windows Boot Manager or network boot) correctly simulates hardware rejection.
+5. **USB Hand-off:** Observe the `Booting from UEFI...` status message transitioning directly into the Windows Setup installer.
+
+---
+
+## 🖥️ Phase 2: Windows Setup & Partition Management
+
+Once booted into the installer:
+* **Language & Region:** Select your preferred language, time/currency format, and keyboard layout.
+* **Setup Activation:** Click **Install Now** and input your product key (or select "I don't have a product key" for evaluation/later activation).
+* **Edition Selection:** Choose **Windows 11 Pro**.
+* **Disk Partitioning:**
+  * View existing partitions on the target drive.
+  * Practice **Delete**, **Format**, and **New** partition allocations.
+  * Select the unallocated space or primary partition to begin file copying.
+* **Installation Progress:** Watch the automated progress screen handle *Copying Windows files*, *Getting files ready for installation*, *Installing features*, *Installing updates*, and *Finishing up*.
+
+---
+
+## 👤 Phase 3: Out-of-Box Experience (OOBE) & Local Account Setup
+
+Following the post-installation reboot, you enter the Windows 11 OOBE phase:
+* Select your region, keyboard layout, and PC name.
+* When prompted to connect to a network for Microsoft account sign-in, use the **Offline Workaround**:
+  * Select **"I don't have internet"**.
+  * Choose **"Continue with limited setup"**.
+* Create a secure **Local User Account** (Username and Password) instead of being forced to link a cloud Microsoft account.
+* Configure privacy settings (telemetry, location, diagnostics) to complete the setup and drop into the Windows 11 Pro desktop.
+
+---
+
+## 🛠️ Requirements & Troubleshooting
+
+* **Media:** USB flash drive (minimum 8GB, formatted with Rufus or official Media Creation Tool).
+* **Firmware:** UEFI mode enabled with Secure Boot compatible hardware profile.
+* **Common Pitfall:** If the PC boots directly into the existing OS instead of the USB, verify your motherboard's boot menu key (`F12` is common on Dell/Intel, `F11` on MSI/ASRock, `F8` on ASUS).
