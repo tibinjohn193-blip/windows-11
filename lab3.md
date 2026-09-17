@@ -1,8 +1,8 @@
-LAB 3 :RESTORE POINT
+# LAB 3 :RESTORE POINT
 
 A restore point is a saved snapshot of your Windows system's state at a specific moment — like a "save file" for your operating system's configuration, so you can roll back if something goes wrong.
 
-What it actually saves:
+ What it actually saves:
 
 System files and settings
 The Windows Registry
@@ -14,7 +14,7 @@ What it does not save:
 Your personal files (documents, photos, downloads) — restore points don't touch these
 It's not a full backup — think of it as "undo for Windows itself," not a file backup solution
 
-LAB Step By STEPS
+## LAB Step By STEPS
 
 Configure is now fully working, matching real Windows:
 
