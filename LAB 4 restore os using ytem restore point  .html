@@ -23,6 +23,34 @@
             user-select: none;
         }
 
+        /* --- INSTRUCTION PANEL STYLES --- */
+        #instruction-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 320px;
+            background: rgba(255, 255, 255, 0.95);
+            border: 3px solid #0078D7;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            z-index: 10000; /* Extremely high to float above WinRE screens */
+            color: #1B1B1B;
+        }
+        #instruction-panel h3 {
+            margin: 0 0 10px 0;
+            font-size: 15px;
+            color: #0078D7;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        #instruction-text {
+            margin: 0;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
         .screen {
             display: none;
             width: 100%;
@@ -211,6 +239,7 @@
             display: none;
             justify-content: center;
             align-items: center;
+            z-index: 5000;
         }
 
         .dialog-box {
@@ -274,17 +303,24 @@
             border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
             text-align: center;
+            color: black;
         }
     </style>
 </head>
 <body>
+
+    <!-- INSTRUCTION PANEL -->
+    <div id="instruction-panel">
+        <h3>📋 Lab Guide</h3>
+        <p id="instruction-text"><b>Step 1:</b> Access the Recovery Environment. Click the <b>(Shift) + Restart</b> button to simulate rebooting into WinRE.</p>
+    </div>
 
     <!-- 1. Desktop Start (Trigger) -->
     <div id="screen-desktop" class="screen active">
         <div class="start-menu-sim">
             <h3>Start Simulation</h3>
             <p>To access WinRE, simulate holding Shift and clicking Restart.</p>
-            <button class="btn-desktop" onclick="goToScreen('screen-loading', 1500, 'screen-winre-main')">
+            <button class="btn-desktop" onclick="goToScreen('screen-loading', 1500, 'screen-winre-main'); setInstruction('<b>Step 2:</b> Navigate to System Restore. Click <b>Troubleshoot</b>.');">
                 (Shift) + Restart
             </button>
         </div>
@@ -310,7 +346,7 @@
                 <div class="tile-icon">💿</div>
                 <div class="tile-text">Use a device<br><small>Use a USB drive, network connection, or Windows recovery DVD</small></div>
             </div>
-            <div class="winre-tile" onclick="goToScreen('screen-winre-troubleshoot')">
+            <div class="winre-tile" onclick="goToScreen('screen-winre-troubleshoot'); setInstruction('<b>Step 2:</b> Click <b>Advanced options</b>.');">
                 <div class="tile-icon">🔧</div>
                 <div class="tile-text">Troubleshoot<br><small>Reset your PC or see advanced options</small></div>
             </div>
@@ -323,14 +359,14 @@
 
     <!-- 3. WinRE Troubleshoot -->
     <div id="screen-winre-troubleshoot" class="screen winre">
-        <div style="cursor: pointer; margin-bottom: 20px;" onclick="goToScreen('screen-winre-main')">←</div>
+        <div style="cursor: pointer; margin-bottom: 20px;" onclick="goToScreen('screen-winre-main'); setInstruction('<b>Step 2:</b> Navigate to System Restore. Click <b>Troubleshoot</b>.');">←</div>
         <div class="winre-title">Troubleshoot</div>
         <div class="tile-grid">
             <div class="winre-tile" onclick="alert('Reset PC not simulated.')">
                 <div class="tile-icon">🔄</div>
                 <div class="tile-text">Reset this PC<br><small>Let's you choose to keep or remove your personal files, and then reinstalls Windows.</small></div>
             </div>
-            <div class="winre-tile" onclick="goToScreen('screen-winre-advanced')">
+            <div class="winre-tile" onclick="goToScreen('screen-winre-advanced'); setInstruction('<b>Step 2:</b> Click <b>System Restore</b>.');">
                 <div class="tile-icon">⚙️</div>
                 <div class="tile-text">Advanced options</div>
             </div>
@@ -339,7 +375,7 @@
 
     <!-- 4. WinRE Advanced Options -->
     <div id="screen-winre-advanced" class="screen winre">
-        <div style="cursor: pointer; margin-bottom: 20px;" onclick="goToScreen('screen-winre-troubleshoot')">←</div>
+        <div style="cursor: pointer; margin-bottom: 20px;" onclick="goToScreen('screen-winre-troubleshoot'); setInstruction('<b>Step 2:</b> Click <b>Advanced options</b>.');">←</div>
         <div class="winre-title">Advanced options</div>
         <div class="tile-grid">
             <div class="winre-tile" onclick="alert('Not simulated.')">
@@ -358,7 +394,7 @@
                 <div class="tile-icon">🗑️</div>
                 <div class="tile-text">Uninstall Updates</div>
             </div>
-            <div class="winre-tile" onclick="goToScreen('screen-winre-account')">
+            <div class="winre-tile" onclick="goToScreen('screen-winre-account'); setInstruction('<b>Step 3:</b> Authenticate Your Account. Click on the <b>admin</b> account to continue.');">
                 <div class="tile-icon">⏮️</div>
                 <div class="tile-text">System Restore<br><small>Use a restore point recorded on your PC to restore Windows</small></div>
             </div>
@@ -371,10 +407,10 @@
 
     <!-- 5. Select Account -->
     <div id="screen-winre-account" class="screen winre">
-        <div style="cursor: pointer; margin-bottom: 20px;" onclick="goToScreen('screen-winre-advanced')">←</div>
+        <div style="cursor: pointer; margin-bottom: 20px;" onclick="goToScreen('screen-winre-advanced'); setInstruction('<b>Step 2:</b> Click <b>System Restore</b>.');">←</div>
         <div class="winre-title">System Restore</div>
         <p>Choose an account to continue.</p>
-        <div class="winre-tile" onclick="goToScreen('screen-winre-password')">
+        <div class="winre-tile" onclick="goToScreen('screen-winre-password'); setInstruction('<b>Step 3:</b> Type in the password (<b>123</b>) and click <b>Continue</b>.');">
             <div class="tile-icon">👤</div>
             <div class="tile-text">admin<br><small>Administrator</small></div>
         </div>
@@ -382,7 +418,7 @@
 
     <!-- 6. Enter Password -->
     <div id="screen-winre-password" class="screen winre">
-        <div style="cursor: pointer; margin-bottom: 20px;" onclick="goToScreen('screen-winre-account')">←</div>
+        <div style="cursor: pointer; margin-bottom: 20px;" onclick="goToScreen('screen-winre-account'); setInstruction('<b>Step 3:</b> Authenticate Your Account. Click on the <b>admin</b> account to continue.');">←</div>
         <div class="winre-title">System Restore</div>
         <p>Hi admin.</p>
         <p>Enter the password for this account. (Hint: 123)</p>
@@ -407,7 +443,7 @@
                 <p>System Restore does not affect any of your documents, pictures, or other personal data. Recently installed programs and drivers might be uninstalled.</p>
             </div>
             <div id="wizard-footer-1" class="wizard-footer active">
-                <button onclick="goToScreen('screen-winre-advanced')" style="float: left;">Cancel</button>
+                <button onclick="goToScreen('screen-winre-advanced'); setInstruction('<b>Step 2:</b> Click <b>System Restore</b>.');" style="float: left;">Cancel</button>
                 <button onclick="nextWizard(2)">Next ></button>
             </div>
 
@@ -435,7 +471,7 @@
             <div id="wizard-footer-2" class="wizard-footer" style="display:none;">
                 <button onclick="nextWizard(1)"> < Back </button>
                 <button id="btn-next-2" onclick="nextWizard(3)" disabled>Next ></button>
-                <button onclick="goToScreen('screen-winre-advanced')">Cancel</button>
+                <button onclick="goToScreen('screen-winre-advanced'); setInstruction('<b>Step 2:</b> Click <b>System Restore</b>.');">Cancel</button>
             </div>
 
             <!-- Wizard Page 3 -->
@@ -451,7 +487,7 @@
             <div id="wizard-footer-3" class="wizard-footer" style="display:none;">
                 <button onclick="nextWizard(2)"> < Back </button>
                 <button onclick="showWarning()">Finish</button>
-                <button onclick="goToScreen('screen-winre-advanced')">Cancel</button>
+                <button onclick="goToScreen('screen-winre-advanced'); setInstruction('<b>Step 2:</b> Click <b>System Restore</b>.');">Cancel</button>
             </div>
         </div>
     </div>
@@ -495,6 +531,11 @@
     </div>
 
     <script>
+        /* ---- INSTRUCTION HELPER FUNCTION ---- */
+        function setInstruction(text) {
+            document.getElementById('instruction-text').innerHTML = text;
+        }
+
         // Set dynamic date to make it look realistic based on today
         const today = new Date();
         const formattedDate = today.toLocaleDateString() + " " + today.toLocaleTimeString();
@@ -520,6 +561,7 @@
             if(pwd === '123') {
                 document.getElementById('pwd-error').style.display = 'none';
                 goToScreen('screen-sr-wizard');
+                setInstruction('<b>Step 4:</b> The System Restore wizard has launched. Click <b>Next ></b> to proceed.');
             } else {
                 document.getElementById('pwd-error').style.display = 'block';
             }
@@ -534,6 +576,15 @@
             // Show target
             document.getElementById('wizard-page-' + pageNum).style.display = 'block';
             document.getElementById('wizard-footer-' + pageNum).style.display = 'block';
+            
+            // Update Instruction Panel based on Wizard Page
+            if(pageNum === 1) {
+                setInstruction('<b>Step 4:</b> The System Restore wizard has launched. Click <b>Next ></b> to proceed.');
+            } else if (pageNum === 2) {
+                setInstruction('<b>Step 4:</b> Click on the restore point named <b>smec</b> to highlight it in blue, then click <b>Next ></b>.');
+            } else if (pageNum === 3) {
+                setInstruction('<b>Step 5:</b> Verify the details on the confirmation screen and click <b>Finish</b>.');
+            }
         }
 
         function selectRow() {
@@ -544,15 +595,18 @@
 
         function showWarning() {
             document.getElementById('dialog-warning').style.display = 'flex';
+            setInstruction('<b>Step 5:</b> Read the final warning and click <b>Yes</b> to start the restoration (this process cannot be interrupted).');
         }
 
         function hideWarning() {
             document.getElementById('dialog-warning').style.display = 'none';
+            setInstruction('<b>Step 5:</b> Verify the details on the confirmation screen and click <b>Finish</b>.');
         }
 
         function startRestore() {
             hideWarning();
             goToScreen('screen-sr-progress');
+            setInstruction('<b>Step 6:</b> Restoration is running. The system will initialize, restore files, and automatically restart.');
             
             const bar = document.getElementById('progress-bar');
             const text = document.getElementById('progress-text');
@@ -564,6 +618,9 @@
             
             setTimeout(() => {
                 goToScreen('screen-loading', 2000, 'screen-desktop-success');
+                setTimeout(() => {
+                    setInstruction('✅ <b>Lab Complete!</b> The system has been successfully restored to the previous working state.');
+                }, 2000);
             }, 6500);
         }
     </script>
