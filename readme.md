@@ -15,3 +15,6 @@ Interactive, browser-based simulations of common Windows 11 Pro setup and admini
 
 [🛠️LAB 6  ip configuration & ICMP inception](lab6.md)
 
+
+[🛠️LAB 7  Windows 11 Remote Desktop Connection (RDP)](lab7.md)
+
