@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Windows 11 Remote Desktop Lab</title>
+<style>
+    :root {
+        --win-bg: url('https://images.unsplash.com/photo-1617471346061-5d329ab9c574?q=80&w=1920&auto=format&fit=crop');
+        --win-bg-pc2: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1920&auto=format&fit=crop');
+        --taskbar-bg: rgba(20, 20, 20, 0.75);
+        --win-color: #ffffff;
+        --accent: #0067C0;
+    }
+
+    body, html {
+        margin: 0; padding: 0; width: 100%; height: 100%;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        overflow: hidden; background-color: #000;
+        user-select: none;
+    }
+
+    #desktop {
+        width: 100%; height: 100%;
+        background: var(--win-bg) no-repeat center center fixed;
+        background-size: cover;
+        position: relative;
+        transition: background 0.3s ease;
+    }
+
+    #desktop.pc2-view {
+        background: var(--win-bg-pc2) no-repeat center center fixed;
+        background-size: cover;
+    }
+
+    /* Top PC Switcher */
+    #pc-switcher {
+        position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.8); color: white;
+        padding: 10px 20px; border-radius: 0 0 10px 10px;
+        display: flex; gap: 15px; z-index: 9999;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
+    .pc-btn {
+        background: #333; border: 1px solid #555; color: white;
+        padding: 8px 20px; border-radius: 5px; cursor: pointer;
+        font-weight: bold; transition: 0.2s;
+    }
+    .pc-btn.active { background: var(--accent); border-color: var(--accent); }
+
+    /* Instruction Panel */
+    #instruction-panel {
+        position: absolute; top: 60px; right: 20px;
+        width: 320px; background: rgba(255, 255, 255, 0.95);
+        border: 3px solid var(--accent); border-radius: 8px;
+        padding: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+        z-index: 9000; color: #1B1B1B;
+    }
+    #instruction-panel h3 { margin: 0 0 10px 0; font-size: 15px; color: var(--accent); }
+    #instruction-text { margin: 0; font-size: 13px; line-height: 1.5; }
+
+    /* Taskbar */
+    .taskbar {
+        position: absolute; bottom: 0; left: 0; right: 0; height: 50px;
+        background: var(--taskbar-bg); backdrop-filter: blur(20px);
+        display: flex; align-items: center; justify-content: center; gap: 15px;
+        z-index: 8000;
+    }
+    .tb-icon {
+        width: 36px; height: 36px; border-radius: 4px;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; transition: 0.2s; font-size: 20px;
+    }
+    .tb-icon:hover { background: rgba(255, 255, 255, 0.1); }
+    .tb-icon.active { background: rgba(255, 255, 255, 0.2); border-bottom: 2px solid var(--accent); }
+
+    /* Start Menu */
+    #start-menu {
+        position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%);
+        width: 600px; height: 500px; background: rgba(243, 243, 243, 0.95);
+        backdrop-filter: blur(20px); border-radius: 10px;
+        box-shadow: 0 5px 30px rgba(0,0,0,0.4); display: none;
+        flex-direction: column; padding: 30px; z-index: 7500; border: 1px solid #ccc;
+    }
+    #start-menu.show { display: flex; }
+    .sm-search {
+        background: #fff; padding: 10px 15px; border-radius: 20px;
+        border: 1px solid #ccc; color: #666; font-size: 14px; margin-bottom: 30px;
+    }
+    .sm-pinned { font-weight: bold; margin-bottom: 15px; }
+    .sm-grid {
+        display: grid; grid-template-columns: repeat(6, 1fr); gap: 15px;
+    }
+    .sm-item {
+        display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+        cursor: pointer; padding: 10px 5px; border-radius: 5px; text-align: center;
+    }
+    .sm-item:hover { background: rgba(0,0,0,0.05); }
+    .sm-item .icon { font-size: 32px; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; }
+    .sm-item .text { font-size: 11px; font-weight: normal; word-wrap: break-word;}
+
+    /* Windows Base */
+    .window {
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        background: #fff; border-radius: 8px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        display: none; flex-direction: column; overflow: hidden;
+        z-index: 5000; border: 1px solid #ccc;
+    }
+    .window.show { display: flex; }
+    .win-header {
+        height: 32px; background: #f3f3f3; display: flex; align-items: center; justify-content: space-between;
+        padding: 0 10px; font-size: 12px; border-bottom: 1px solid #e1e1e1;
+    }
+    .win-title { display: flex; align-items: center; gap: 8px; }
+    .win-controls span { padding: 5px 10px; cursor: pointer; }
+    .win-controls span:hover { background: #e81123; color: white; }
+
+    /* CMD Window */
+    #cmd-win { width: 600px; height: 400px; background: #0c0c0c; color: #cccccc; font-family: Consolas, monospace; }
+    #cmd-win .win-header { background: #000; color: #fff; border-bottom: none; }
+    .cmd-body { padding: 10px; font-size: 14px; overflow-y: auto; flex-grow: 1; }
+    .cmd-input-line { display: flex; margin-top: 10px; }
+    .cmd-input-line input {
+        background: transparent; border: none; color: #fff; font-family: Consolas, monospace;
+        font-size: 14px; outline: none; flex-grow: 1; margin-left: 5px;
+    }
+
+    /* Settings Window */
+    #settings-win { width: 850px; height: 550px; }
+    .settings-body { display: flex; height: calc(100% - 32px); }
+    .settings-sidebar { width: 220px; background: #f3f3f3; padding: 20px 10px; border-right: 1px solid #e1e1e1; overflow-y: auto;}
+    .settings-content { padding: 20px 40px; flex-grow: 1; overflow-y: auto; position: relative;}
+    .settings-item { padding: 10px; border-radius: 5px; cursor: pointer; margin-bottom: 5px; font-size: 13px; display: flex; align-items: center; gap: 10px;}
+    .settings-item.active { background: #e5e5e5; font-weight: bold; }
+    
+    /* Settings Search */
+    .set-search-container { position: relative; margin-bottom: 20px; }
+    .set-search-input { width: 100%; padding: 10px 15px; border-radius: 20px; border: 1px solid #ccc; outline: none; font-size: 14px; box-sizing: border-box; background: #f9f9f9;}
+    .set-search-input:focus { border-color: var(--accent); background: #fff;}
+    .set-search-results {
+        position: absolute; top: 100%; left: 0; width: 100%; background: #fff; border: 1px solid #ccc;
+        border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-top: 5px; display: none; z-index: 10;
+    }
+    .set-result-item { padding: 10px 15px; cursor: pointer; font-size: 13px; }
+    .set-result-item:hover { background: #f0f0f0; }
+
+    /* Settings Home Cards */
+    .set-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .set-card {
+        border: 1px solid #e1e1e1; border-radius: 6px; padding: 15px; display: flex; align-items: center; gap: 15px; cursor: pointer; transition: 0.1s;
+    }
+    .set-card:hover { background: #f9f9f9; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .set-card .icon { font-size: 24px; color: var(--accent); }
+    .set-card .text { font-size: 13px; font-weight: bold; }
+    .set-card .subtext { font-size: 11px; color: #666; font-weight: normal; margin-top: 3px;}
+
+    /* Toggle Switch */
+    .toggle-switch { display: flex; align-items: center; justify-content: space-between; background: #f9f9f9; padding: 20px; border: 1px solid #ddd; border-radius: 8px; margin-top: 20px;}
+    .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 20px; }
+    .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+    input:checked + .slider { background-color: var(--accent); }
+    input:checked + .slider:before { transform: translateX(20px); }
+
+    /* Run Window */
+    #run-win { width: 420px; height: auto; }
+    .run-content { padding: 20px; font-size: 13px; }
+    .run-icon-text { display: flex; gap: 15px; margin-bottom: 20px; }
+    .run-input-group { display: flex; align-items: center; gap: 10px; }
+
+    /* Generic Footer for Windows */
+    .win-footer { background: #f0f0f0; padding: 15px; text-align: right; box-sizing: border-box; border-top: 1px solid #ddd; }
+    .btn { padding: 6px 20px; border: 1px solid #ccc; background: #fff; border-radius: 4px; cursor: pointer; margin-left: 10px; }
+    .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
+
+    /* RDP Window */
+    #rdp-win { width: 450px; height: 250px; }
+    .rdp-content { padding: 20px; }
+    .rdp-input { width: 100%; padding: 8px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;}
+
+    /* RDP Credential Window */
+    #rdp-cred-win { width: 350px; height: auto; padding-bottom: 0; z-index: 6000;}
+    .cred-header { background: var(--accent); color: white; padding: 20px; text-align: center; }
+
+    /* RDP Cert Window */
+    #rdp-cert-win { width: 450px; z-index: 6100; padding-bottom: 0;}
+
+    /* RDP Session (Full screen overlay inside desktop) */
+    #rdp-session {
+        position: absolute; top: 0; left: 0; width: 100%; height: calc(100% - 50px);
+        background: var(--win-bg) no-repeat center center; background-size: cover;
+        z-index: 7000; display: none; border: 5px solid #E5A910; box-sizing: border-box;
+    }
+    .rdp-bar {
+        position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+        background: #E5A910; color: black; padding: 5px 20px;
+        border-radius: 0 0 8px 8px; font-weight: bold; font-size: 12px; display: flex; gap: 20px;
+    }
+    .rdp-close { cursor: pointer; color: black; font-weight: bold; }
+    .rdp-close:hover { color: red; }
+</style>
+</head>
+<body>
+
+    <!-- PC Switcher -->
+    <div id="pc-switcher">
+        <div class="pc-btn active" id="btn-pc1" onclick="switchPC('PC1')">View PC1 (192.168.1.1)</div>
+        <div class="pc-btn" id="btn-pc2" onclick="switchPC('PC2')">View PC2 (192.168.1.2)</div>
+    </div>
+
+    <!-- INSTRUCTION PANEL -->
+    <div id="instruction-panel">
+        <h3>📋 Lab Guide</h3>
+        <p id="instruction-text"></p>
+    </div>
+
+    <div id="desktop">
+        <!-- RDP Session Overlay -->
+        <div id="rdp-session">
+            <div class="rdp-bar">
+                <span>192.168.1.1</span>
+                <span class="rdp-close" onclick="closeSession()">✖</span>
+            </div>
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.6); padding: 20px; border-radius: 10px; color: white; text-align: center;">
+                <h2>Welcome to PC1</h2>
+                <p>Logged in as: PC1</p>
+            </div>
+        </div>
+
+        <!-- Start Menu -->
+        <div id="start-menu">
+            <div class="sm-search">Type here to search</div>
+            <div class="sm-pinned">Pinned</div>
+            <div class="sm-grid">
+                <div class="sm-item" onclick="openCmd()"><div class="icon">⬛</div><div class="text">Command Prompt</div></div>
+                <div class="sm-item" onclick="openRun()">
+                    <div class="icon">
+                        <svg width="32" height="32" viewBox="0 0 16 16" fill="#0067C0" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zM1 3.5a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5V5H1V3.5zM1 6h14v6.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5V6zm2 2.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5z"/>
+                        </svg>
+                    </div>
+                    <div class="text">Run</div>
+                </div>
+                <div class="sm-item" onclick="openSettings()"><div class="icon">⚙️</div><div class="text">Settings</div></div>
+                <div class="sm-item"><div class="icon">🌐</div><div class="text">Edge</div></div>
+                <div class="sm-item"><div class="icon">📁</div><div class="text">File Explorer</div></div>
+                <div class="sm-item"><div class="icon">📧</div><div class="text">Mail</div></div>
+            </div>
+        </div>
+
+        <!-- Taskbar -->
+        <div class="taskbar">
+            <div class="tb-icon" onclick="toggleStartMenu()" title="Start">🪟</div>
+            <div class="tb-icon" onclick="openSettings()" title="Settings">⚙️</div>
+            <div class="tb-icon" id="tb-run" onclick="toggleWin('run-win')" style="display: none;" title="Run (Win+R)">
+                <svg width="22" height="22" viewBox="0 0 16 16" fill="#0067C0" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zM1 3.5a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5V5H1V3.5zM1 6h14v6.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5V6zm2 2.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5z"/>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Run Window -->
+        <div class="window" id="run-win">
+            <div class="win-header">
+                <div class="win-title">
+                    <span style="display:flex;align-items:center;">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="#0067C0" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zM1 3.5a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5V5H1V3.5zM1 6h14v6.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5V6zm2 2.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5z"/>
+                        </svg>
+                    </span> 
+                    Run
+                </div>
+                <div class="win-controls"><span onclick="closeWin('run-win')">✖</span></div>
+            </div>
+            <div class="run-content">
+                <div class="run-icon-text">
+                    <div style="font-size: 32px; line-height: 1;">🪟</div>
+                    <div>Type the name of a program, folder, document, or Internet resource, and Windows will open it for you.</div>
+                </div>
+                <div class="run-input-group">
+                    <label style="font-weight: 500;">Open:</label>
+                    <input type="text" id="run-input" style="flex-grow: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px;" onkeypress="if(event.key==='Enter') executeRun()">
+                </div>
+            </div>
+            <div class="win-footer">
+                <button class="btn btn-primary" onclick="executeRun()">OK</button>
+                <button class="btn" onclick="closeWin('run-win')">Cancel</button>
+            </div>
+        </div>
+
+        <!-- CMD Window -->
+        <div class="window" id="cmd-win">
+            <div class="win-header">
+                <div class="win-title"><span>⬛</span> Command Prompt</div>
+                <div class="win-controls"><span onclick="closeWin('cmd-win')">✖</span></div>
+            </div>
+            <div class="cmd-body" id="cmd-body">
+                Microsoft Windows [Version 10.0.22631.3007]<br>
+                (c) Microsoft Corporation. All rights reserved.<br><br>
+                C:\Users\<span id="cmd-user">PC1</span>><br>
+                <div class="cmd-input-line">
+                    <span>C:\Users\<span id="cmd-user2">PC1</span>></span>
+                    <input type="text" id="cmd-input" autocomplete="off" onkeypress="handleCmd(event)">
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Window -->
+        <div class="window" id="settings-win">
+            <div class="win-header">
+                <div class="win-title"><span>⚙️</span> Settings</div>
+                <div class="win-controls"><span onclick="closeWin('settings-win')">✖</span></div>
+            </div>
+            <div class="settings-body">
+                <div class="settings-sidebar">
+                    <div class="settings-item active">💻 System</div>
+                    <div class="settings-item">📶 Bluetooth & devices</div>
+                    <div class="settings-item">🌐 Network & internet</div>
+                    <div class="settings-item">🎨 Personalization</div>
+                    <div class="settings-item">📱 Apps</div>
+                    <div class="settings-item">👤 Accounts</div>
+                    <div class="settings-item">🕒 Time & language</div>
+                    <div class="settings-item">🎮 Gaming</div>
+                    <div class="settings-item">🛡️ Privacy & security</div>
+                    <div class="settings-item">🔄 Windows Update</div>
+                </div>
+                <div class="settings-content">
+                    
+                    <div class="set-search-container">
+                        <input type="text" class="set-search-input" id="set-search" placeholder="Find a setting" oninput="handleSetSearch()">
+                        <div class="set-search-results" id="set-search-results">
+                            <div class="set-result-item" onclick="showRdpPage()">🖥️ Remote Desktop settings</div>
+                        </div>
+                    </div>
+
+                    <!-- System Home Page -->
+                    <div id="set-page-system">
+                        <h2 style="margin-top:0; margin-bottom: 20px;">System</h2>
+                        <div class="set-grid">
+                            <div class="set-card"><div class="icon">🖥️</div><div><div class="text">Display</div><div class="subtext">Monitors, brightness</div></div></div>
+                            <div class="set-card"><div class="icon">🔊</div><div><div class="text">Sound</div><div class="subtext">Volume levels, input</div></div></div>
+                            <div class="set-card"><div class="icon">🔔</div><div><div class="text">Notifications</div><div class="subtext">Alerts from apps</div></div></div>
+                            <div class="set-card"><div class="icon">🔋</div><div><div class="text">Power & battery</div><div class="subtext">Sleep, battery usage</div></div></div>
+                            <div class="set-card"><div class="icon">💾</div><div><div class="text">Storage</div><div class="subtext">Storage space, drives</div></div></div>
+                            <div class="set-card" onclick="showRdpPage()"><div class="icon">💻</div><div><div class="text">Remote Desktop</div><div class="subtext">Connect to this PC</div></div></div>
+                            <div class="set-card"><div class="icon">ℹ️</div><div><div class="text">About</div><div class="subtext">Device specs, rename</div></div></div>
+                        </div>
+                    </div>
+
+                    <!-- RDP Toggle Page -->
+                    <div id="set-page-rdp" style="display: none;">
+                        <h2 style="margin-top:0; display:flex; align-items:center; gap:10px;">
+                            <span style="cursor:pointer; font-size:18px;" onclick="showSystemPage()">←</span> 
+                            Remote Desktop
+                        </h2>
+                        <p>Let you connect to and control this PC from a remote device.</p>
+                        <div class="toggle-switch">
+                            <div>
+                                <strong>Remote Desktop</strong><br>
+                                <span style="font-size: 12px; color: #666;">Off</span>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="rdp-toggle" onchange="handleRdpToggle(this)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- RDP Wizard Window -->
+        <div class="window" id="rdp-win">
+            <div class="win-header">
+                <div class="win-title"><span>🖥️</span> Remote Desktop Connection</div>
+                <div class="win-controls"><span onclick="closeWin('rdp-win')">✖</span></div>
+            </div>
+            <div class="rdp-content">
+                <p>Computer:</p>
+                <input type="text" id="rdp-ip" class="rdp-input" placeholder="e.g. 192.168.1.1">
+                <p style="font-size: 12px; color: #666;">User name: None specified</p>
+            </div>
+            <div class="win-footer" style="position: absolute; bottom: 0; width: 100%;">
+                <button class="btn btn-primary" onclick="initiateRDP()">Connect</button>
+                <button class="btn" onclick="closeWin('rdp-win')">Cancel</button>
+            </div>
+        </div>
+
+        <!-- RDP Credentials Window -->
+        <div class="window" id="rdp-cred-win">
+            <div class="win-header">
+                <div class="win-title">Windows Security</div>
+                <div class="win-controls"><span onclick="document.getElementById('rdp-cred-win').classList.remove('show')">✖</span></div>
+            </div>
+            <div class="cred-header">
+                <h3 style="margin-top: 0;">Enter your credentials</h3>
+                <p style="font-size: 12px; margin: 0;">Connecting to 192.168.1.1</p>
+            </div>
+            <div class="rdp-content">
+                <input type="text" id="rdp-user" class="rdp-input" placeholder="User name">
+                <input type="password" id="rdp-pass" class="rdp-input" placeholder="Password">
+                <p id="cred-error" style="color: red; font-size: 12px; display: none;">Logon failed. Try again.</p>
+            </div>
+            <div class="win-footer">
+                <button class="btn btn-primary" onclick="checkCreds()">OK</button>
+                <button class="btn" onclick="document.getElementById('rdp-cred-win').classList.remove('show')">Cancel</button>
+            </div>
+        </div>
+
+        <!-- RDP Cert Window -->
+        <div class="window" id="rdp-cert-win">
+            <div class="win-header">
+                <div class="win-title">Remote Desktop Connection</div>
+                <div class="win-controls"><span onclick="document.getElementById('rdp-cert-win').classList.remove('show')">✖</span></div>
+            </div>
+            <div class="rdp-content">
+                <h3 style="color: #d9534f; margin-top:0; font-size: 15px;">⚠️ The identity of the remote computer cannot be verified. Do you want to connect anyway?</h3>
+                <p style="font-size: 12px;">The remote computer could not be authenticated due to problems with its security certificate. It may be unsafe to proceed.</p>
+                <p style="font-size: 12px; font-weight: bold;">Name: PC1</p>
+            </div>
+            <div class="win-footer">
+                <button class="btn btn-primary" onclick="connectSession()">Yes</button>
+                <button class="btn" onclick="document.getElementById('rdp-cert-win').classList.remove('show')">No</button>
+            </div>
+        </div>
+
+    </div>
+
+<script>
+    let currentPC = 'PC1';
+    let pc1RdpEnabled = false;
+    let pc2RdpEnabled = false;
+    let currentStep = 1;
+
+    const instructions = {
+        1: "<b>Step 1 (PC1):</b> We are on PC1 (IP: 192.168.1.1). Click the <b>Start (🪟)</b> button and open <b>Command Prompt</b>. Type <code>ping 192.168.1.2</code>.",
+        2: "<b>Step 2 (PC1):</b> Ping successful! Close CMD. Now, click <b>Start</b> and open <b>Settings</b>.",
+        3: "<b>Step 3 (PC1):</b> In Settings, type <b>Remote</b> in the search bar and click <b>Remote Desktop settings</b>.",
+        4: "<b>Step 4 (PC1):</b> Toggle <b>Remote Desktop</b> to On. PC1 is now ready.",
+        5: "<b>Step 5:</b> Switch to <b>PC2</b> using the <b>View PC2</b> button at the top.",
+        6: "<b>Step 6 (PC2):</b> We are now on PC2 (IP: 192.168.1.2). Open <b>Settings</b> from Start, search for Remote Desktop, and turn it On.",
+        7: "<b>Step 7 (PC2):</b> Now, click <b>Start</b> and open <b>Run</b>.",
+        8: "<b>Step 8 (PC2):</b> Type <code>mstsc</code> in the Run dialog and click <b>OK</b>.",
+        9: "<b>Step 9 (PC2):</b> Enter PC1's IP address (<b>192.168.1.1</b>) and click Connect.",
+        10: "<b>Step 10 (PC2):</b> Enter PC1's credentials (Username: <b>PC1</b>, Password: <b>1234</b>) and click OK.",
+        11: "<b>Step 11 (PC2):</b> Accept the certificate warning by clicking <b>Yes</b>.",
+        12: "✅ <b>Lab Complete!</b> You are now remotely connected to PC1 from PC2. Click X on the top yellow bar to disconnect."
+    };
+
+    function updateGuide() {
+        document.getElementById('instruction-text').innerHTML = instructions[currentStep];
+    }
+
+    function switchPC(pc) {
+        if(currentStep === 5 && pc === 'PC2') {
+            currentStep = 6; updateGuide();
+        }
+
+        currentPC = pc;
+        document.getElementById('btn-pc1').classList.toggle('active', pc === 'PC1');
+        document.getElementById('btn-pc2').classList.toggle('active', pc === 'PC2');
+        
+        const desktop = document.getElementById('desktop');
+        if(pc === 'PC2') {
+            desktop.classList.add('pc2-view');
+            document.getElementById('cmd-user').innerText = 'PC2';
+            document.getElementById('cmd-user2').innerText = 'PC2';
+            document.getElementById('rdp-toggle').checked = pc2RdpEnabled;
+        } else {
+            desktop.classList.remove('pc2-view');
+            document.getElementById('cmd-user').innerText = 'PC1';
+            document.getElementById('cmd-user2').innerText = 'PC1';
+            document.getElementById('rdp-toggle').checked = pc1RdpEnabled;
+        }
+
+        // Close all windows and start menu on switch
+        document.querySelectorAll('.window').forEach(w => w.classList.remove('show'));
+        document.getElementById('start-menu').classList.remove('show');
+        showSystemPage(); // Reset settings view
+    }
+
+    /* Start Menu Logic */
+    function toggleStartMenu() {
+        document.getElementById('start-menu').classList.toggle('show');
+    }
+    
+    function openCmd() {
+        document.getElementById('start-menu').classList.remove('show');
+        document.getElementById('cmd-win').classList.add('show');
+        document.getElementById('cmd-input').focus();
+    }
+
+    function openRun() {
+        document.getElementById('start-menu').classList.remove('show');
+        document.getElementById('run-win').classList.add('show');
+        document.getElementById('run-input').focus();
+        if(currentStep === 7 && currentPC === 'PC2') { currentStep = 8; updateGuide(); }
+    }
+
+    function openSettings() {
+        document.getElementById('start-menu').classList.remove('show');
+        document.getElementById('settings-win').classList.add('show');
+        document.getElementById('set-search').focus();
+        if(currentStep === 2 && currentPC === 'PC1') { currentStep = 3; updateGuide(); }
+    }
+
+    function closeWin(id) {
+        document.getElementById(id).classList.remove('show');
+    }
+
+    /* Settings UI Logic */
+    function handleSetSearch() {
+        const val = document.getElementById('set-search').value.toLowerCase();
+        const results = document.getElementById('set-search-results');
+        if(val.includes('remote') || val.includes('desk')) {
+            results.style.display = 'block';
+        } else {
+            results.style.display = 'none';
+        }
+    }
+
+    function showRdpPage() {
+        document.getElementById('set-search-results').style.display = 'none';
+        document.getElementById('set-search').value = '';
+        document.getElementById('set-page-system').style.display = 'none';
+        document.getElementById('set-page-rdp').style.display = 'block';
+        if(currentStep === 3 && currentPC === 'PC1') { currentStep = 4; updateGuide(); }
+    }
+
+    function showSystemPage() {
+        document.getElementById('set-page-system').style.display = 'block';
+        document.getElementById('set-page-rdp').style.display = 'none';
+    }
+
+    // CMD Logic
+    function handleCmd(e) {
+        if (e.key === 'Enter') {
+            const input = document.getElementById('cmd-input');
+            const val = input.value.trim().toLowerCase();
+            const cmdBody = document.getElementById('cmd-body');
+            const user = currentPC === 'PC1' ? 'PC1' : 'PC2';
+            
+            let output = `<br><br>C:\\Users\\${user}> ${val}<br>`;
+            
+            if (val === 'ping 192.168.1.2' && currentPC === 'PC1') {
+                output += `
+Pinging 192.168.1.2 with 32 bytes of data:<br>
+Reply from 192.168.1.2: bytes=32 time<1ms TTL=128<br>
+Reply from 192.168.1.2: bytes=32 time<1ms TTL=128<br>
+Reply from 192.168.1.2: bytes=32 time<1ms TTL=128<br>
+Reply from 192.168.1.2: bytes=32 time<1ms TTL=128<br><br>
+Ping statistics for 192.168.1.2:<br>
+    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),`;
+                if(currentStep === 1) { currentStep = 2; updateGuide(); }
+            } else if (val !== "") {
+                output += `'${val}' is not recognized as an internal or external command.`;
+            }
+
+            if(output !== '') {
+                const newLine = document.createElement('div');
+                newLine.innerHTML = output;
+                input.parentElement.before(newLine);
+            }
+            input.value = '';
+            cmdBody.scrollTop = cmdBody.scrollHeight;
+        }
+    }
+
+    // Settings Toggle Logic
+    function handleRdpToggle(cb) {
+        if(currentPC === 'PC1') {
+            pc1RdpEnabled = cb.checked;
+            if(cb.checked && currentStep === 4) { currentStep = 5; updateGuide(); }
+        } else {
+            pc2RdpEnabled = cb.checked;
+            if(cb.checked && currentStep === 6) { currentStep = 7; updateGuide(); }
+        }
+    }
+
+    // Run Dialog Logic
+    function executeRun() {
+        const val = document.getElementById('run-input').value.trim().toLowerCase();
+        if(val === 'mstsc') {
+            document.getElementById('run-input').value = '';
+            closeWin('run-win');
+            document.getElementById('rdp-win').classList.add('show');
+            if(currentStep === 8 && currentPC === 'PC2') { currentStep = 9; updateGuide(); }
+        } else {
+            alert("Windows cannot find '" + val + "'. Make sure you typed the name correctly, and then try again.");
+        }
+    }
+
+    // MSTSC Logic
+    function initiateRDP() {
+        const ip = document.getElementById('rdp-ip').value.trim();
+        if(ip === '192.168.1.1') {
+            if(!pc1RdpEnabled) {
+                alert("Remote Desktop is not enabled on PC1!");
+                return;
+            }
+            document.getElementById('rdp-cred-win').classList.add('show');
+            if(currentStep === 9) { currentStep = 10; updateGuide(); }
+        } else {
+            alert("Connection failed. Check the IP address.");
+        }
+    }
+
+    function checkCreds() {
+        const user = document.getElementById('rdp-user').value.trim();
+        const pass = document.getElementById('rdp-pass').value.trim();
+        
+        // PC1 Credentials requested by user: PC1 / 1234
+        if(user.toUpperCase() === 'PC1' && pass === '1234') {
+            document.getElementById('cred-error').style.display = 'none';
+            document.getElementById('rdp-cred-win').classList.remove('show');
+            document.getElementById('rdp-cert-win').classList.add('show');
+            if(currentStep === 10) { currentStep = 11; updateGuide(); }
+        } else {
+            document.getElementById('cred-error').style.display = 'block';
+        }
+    }
+
+    function connectSession() {
+        document.getElementById('rdp-cert-win').classList.remove('show');
+        closeWin('rdp-win');
+        document.getElementById('rdp-session').style.display = 'block';
+        if(currentStep === 11) { currentStep = 12; updateGuide(); }
+    }
+
+    function closeSession() {
+        document.getElementById('rdp-session').style.display = 'none';
+    }
+
+    // Initialize
+    updateGuide();
+</script>
+</body>
+</html>
