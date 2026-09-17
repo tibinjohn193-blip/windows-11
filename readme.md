@@ -13,3 +13,5 @@ Interactive, browser-based simulations of common Windows 11 Pro setup and admini
 
 [🛠️LAB 5  windows 11 Disk Management](lab5.md)
 
+[🛠️LAB 6  ip configuration & ICMP inception](lab6.md)
+
