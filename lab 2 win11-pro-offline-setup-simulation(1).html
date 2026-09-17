@@ -28,6 +28,35 @@
     width:100vw;height:100vh;
     display:flex;align-items:center;justify-content:center;
   }
+
+  /* --- INSTRUCTION PANEL STYLES --- */
+  #instruction-panel {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 320px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 3px solid #0067C0;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    z-index: 1000;
+    color: #1B1B1B;
+  }
+  #instruction-panel h3 {
+    margin: 0 0 10px 0;
+    font-size: 15px;
+    color: #0067C0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  #instruction-text {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
   .screen{
     position:absolute;
     inset:0;
@@ -266,6 +295,12 @@
 
 <div id="stage">
 
+  <!-- INSTRUCTION PANEL -->
+  <div id="instruction-panel">
+    <h3>📋 Lab Guide</h3>
+    <p id="instruction-text"><b>Step 1:</b> The Windows Setup program has launched. Confirm your Language, Time, and Keyboard settings, then click <b>Next</b>.</p>
+  </div>
+
   <!-- W1: Windows Setup - language/time/keyboard + Install now -->
   <div class="screen active" data-step="wsLang">
     <div class="oobe">
@@ -278,7 +313,7 @@
       </div>
       <div class="oobe-bottom">
         <div class="win-badge"><span>Microsoft Corporation. All rights reserved.</span></div>
-        <div class="btn-row"><button class="btn-primary" style="min-width:140px;" onclick="go('wsInstallNow')">Next</button></div>
+        <div class="btn-row"><button class="btn-primary" style="min-width:140px;" onclick="go('wsInstallNow'); setInstruction('<b>Step 2:</b> Click <b>Install now</b> to begin the core installation process.');">Next</button></div>
       </div>
     </div>
   </div>
@@ -289,7 +324,7 @@
       <div class="oobe-top" style="align-items:center;text-align:center;justify-content:center;">
         <svg class="boot-logo" viewBox="0 0 88 88" fill="#fff"><rect x="0" y="0" width="41" height="41"/><rect x="47" y="0" width="41" height="41"/><rect x="0" y="47" width="41" height="41"/><rect x="47" y="47" width="41" height="41"/></svg>
         <div class="oobe-title">Windows 11 Pro</div>
-        <button class="btn-primary" style="min-width:180px;padding:12px 30px;margin:18px 0;" onclick="go('wsProductKey')">Install now</button>
+        <button class="btn-primary" style="min-width:180px;padding:12px 30px;margin:18px 0;" onclick="go('wsProductKey'); setInstruction('<b>Step 3:</b> Since we are testing in a lab, click <b>I don\'t have a product key</b> at the bottom.');">Install now</button>
         <button class="link-btn">Repair your computer</button>
       </div>
       <div class="oobe-bottom"><div class="win-badge"><span>Version 24H2</span></div><div class="btn-row"></div></div>
@@ -306,13 +341,13 @@
           <label>Product key</label>
           <input type="text" placeholder="XXXXX-XXXXX-XXXXX-XXXXX-XXXXX" style="letter-spacing:1px;">
         </div>
-        <button class="link-btn" style="padding-left:0;" onclick="go('wsEdition')">I don't have a product key</button>
+        <button class="link-btn" style="padding-left:0;" onclick="go('wsEdition'); setInstruction('<b>Step 4:</b> Select <b>Windows 11 Pro</b> from the list of operating systems, then click <b>Next</b>.');">I don't have a product key</button>
       </div>
       <div class="oobe-bottom">
         <div class="win-badge"><span>Windows 11 Pro</span></div>
         <div class="btn-row">
           <button class="btn-secondary" onclick="go('wsInstallNow')">Back</button>
-          <button class="btn-primary" onclick="go('wsEdition')">Next</button>
+          <button class="btn-primary" onclick="go('wsEdition'); setInstruction('<b>Step 4:</b> Select <b>Windows 11 Pro</b> from the list of operating systems, then click <b>Next</b>.');">Next</button>
         </div>
       </div>
     </div>
@@ -333,7 +368,7 @@
         <div class="win-badge"><span>Windows 11 Pro</span></div>
         <div class="btn-row">
           <button class="btn-secondary" onclick="go('wsProductKey')">Back</button>
-          <button class="btn-primary" onclick="go('wsLicense')">Next</button>
+          <button class="btn-primary" onclick="go('wsLicense'); setInstruction('<b>Step 5:</b> Review the license agreement, check the <b>I accept...</b> box, and click <b>Next</b>.');">Next</button>
         </div>
       </div>
     </div>
@@ -359,7 +394,7 @@
         <div class="win-badge"><span>Windows 11 Pro</span></div>
         <div class="btn-row">
           <button class="btn-secondary" onclick="go('wsEdition')">Back</button>
-          <button class="btn-primary" id="wsLicenseNext" disabled onclick="go('wsType')">Next</button>
+          <button class="btn-primary" id="wsLicenseNext" disabled onclick="go('wsType'); setInstruction('<b>Step 6:</b> Choose <b>Custom: Install Windows only (advanced)</b> to perform a clean install.');">Next</button>
         </div>
       </div>
     </div>
@@ -375,7 +410,7 @@
             <span style="font-weight:600;">Upgrade: Install Windows and keep files, settings, and applications</span>
             <span style="font-size:12.5px;opacity:.85;">Not available — no previous version of Windows was found on this PC.</span>
           </div>
-          <div class="option-item" style="flex-direction:column;align-items:flex-start;gap:4px;" onclick="go('wsDisk')">
+          <div class="option-item" style="flex-direction:column;align-items:flex-start;gap:4px;" onclick="go('wsDisk'); setInstruction('<b>Step 7:</b> You are at the Partition Manager. Since we want a fresh install, click <b>Drive 0 Partition 2</b>, select <b>Format</b>, agree to the prompt, and then click <b>Next</b>.');">
             <span style="font-weight:600;">Custom: Install Windows only (advanced)</span>
             <span style="font-size:12.5px;opacity:.85;">The files, settings, and applications aren't kept. The disk you choose is formatted before Windows installs.</span>
           </div>
@@ -419,7 +454,7 @@
         <div class="win-badge"><span>Windows 11 Pro</span></div>
         <div class="btn-row">
           <button class="btn-secondary" onclick="go('wsType')">Back</button>
-          <button class="btn-primary" onclick="go('wsInstalling');runInstall();">Next</button>
+          <button class="btn-primary" onclick="go('wsInstalling');runInstall(); setInstruction('<b>Step 8:</b> Windows is now copying files. Sit back and wait. The computer will automatically restart during this process.');">Next</button>
         </div>
       </div>
     </div>
@@ -490,7 +525,7 @@
           <span>Windows 11 Pro</span>
         </div>
         <div class="btn-row">
-          <button class="btn-primary" onclick="go('keyboard')">Yes</button>
+          <button class="btn-primary" onclick="go('keyboard'); setInstruction('<b>Step 10:</b> Confirm your keyboard layout by clicking <b>Yes</b>.');">Yes</button>
         </div>
       </div>
     </div>
@@ -513,8 +548,8 @@
           <span>Windows 11 Pro</span>
         </div>
         <div class="btn-row">
-          <button class="btn-secondary" onclick="skipLayout()">Skip</button>
-          <button class="btn-primary" onclick="go('license')">Yes</button>
+          <button class="btn-secondary" onclick="skipLayout(); setInstruction('<b>Step 11:</b> Accept the license agreement for the new installation.');">Skip</button>
+          <button class="btn-primary" onclick="go('license'); setInstruction('<b>Step 11:</b> Accept the license agreement for the new installation.');">Yes</button>
         </div>
       </div>
     </div>
@@ -543,7 +578,7 @@
           <span>Windows 11 Pro</span>
         </div>
         <div class="btn-row">
-          <button class="btn-primary" onclick="go('network')">Accept</button>
+          <button class="btn-primary" onclick="go('network'); setInstruction('<b>Step 12:</b> For this offline setup lab, bypass Microsoft account requirements by clicking <b>I don\'t have internet</b>.');">Accept</button>
         </div>
       </div>
     </div>
@@ -560,7 +595,7 @@
           <div class="wifi-item"><svg viewBox="0 0 24 24" fill="#fff"><path d="M12 20a1.6 1.6 0 100-3.2 1.6 1.6 0 000 3.2zM6.3 13.6a8 8 0 0111.4 0l-1.9 1.9a5.4 5.4 0 00-7.6 0zM3 10.3a12.3 12.3 0 0118 0l-1.9 1.9a9.7 9.7 0 00-14.2 0z"/></svg><span class="wifi-name">Office-Guest</span><span class="wifi-locked">🔒</span></div>
           <div class="wifi-item"><svg viewBox="0 0 24 24" fill="#fff"><path d="M12 20a1.6 1.6 0 100-3.2 1.6 1.6 0 000 3.2zM6.3 13.6a8 8 0 0111.4 0l-1.9 1.9a5.4 5.4 0 00-7.6 0zM3 10.3a12.3 12.3 0 0118 0l-1.9 1.9a9.7 9.7 0 00-14.2 0z"/></svg><span class="wifi-name">NETGEAR-8841</span><span class="wifi-locked">🔒</span></div>
         </div>
-        <button class="link-btn" onclick="go('noInternetConfirm')">I don't have internet</button>
+        <button class="link-btn" onclick="go('noInternetConfirm'); setInstruction('<b>Step 13:</b> Confirm you want to proceed with a local account by clicking <b>Continue with limited setup</b>.');">I don't have internet</button>
       </div>
       <div class="oobe-bottom">
         <div class="win-badge">
@@ -572,7 +607,7 @@
     </div>
   </div>
 
-  <!-- 4b: no internet confirm (Pro edition shows this cleanly, no bypass tricks needed) -->
+  <!-- 4b: no internet confirm -->
   <div class="screen" data-step="noInternetConfirm">
     <div class="oobe">
       <div class="oobe-top">
@@ -590,7 +625,7 @@
         </div>
         <div class="btn-row">
           <button class="btn-secondary" onclick="go('network')">Back</button>
-          <button class="btn-primary" onclick="go('accountType')">Continue with limited setup</button>
+          <button class="btn-primary" onclick="go('accountType'); setInstruction('<b>Step 14:</b> Enter a name for the local user account on this PC, then click <b>Next</b>.');">Continue with limited setup</button>
         </div>
       </div>
     </div>
@@ -634,7 +669,7 @@
           <input id="pwd2" type="password" placeholder="Re-enter password">
         </div>
         <div class="error-text" id="pwdError">Those passwords don't match. Try again.</div>
-        <button class="link-btn" style="padding-left:0;" onclick="skipPassword()">Skip this step (no password)</button>
+        <button class="link-btn" style="padding-left:0;" onclick="skipPassword(); setInstruction('<b>Step 16:</b> Review the privacy settings. For the fastest setup, leave them as default and click <b>Accept</b>.');">Skip this step (no password)</button>
       </div>
       <div class="oobe-bottom">
         <div class="win-badge">
@@ -687,7 +722,7 @@
         </div>
         <div class="btn-row">
           <button class="btn-secondary" onclick="go('password')">Back</button>
-          <button class="btn-primary" onclick="go('privacy')">Next</button>
+          <button class="btn-primary" onclick="go('privacy'); setInstruction('<b>Step 16:</b> Review the privacy settings. For the fastest setup, leave them as default and click <b>Accept</b>.');">Next</button>
         </div>
       </div>
     </div>
@@ -733,7 +768,7 @@
         </div>
         <div class="btn-row">
           <button class="btn-secondary" onclick="go('secquestions')">Back</button>
-          <button class="btn-primary" onclick="startFinalize()">Accept</button>
+          <button class="btn-primary" onclick="startFinalize(); setInstruction('<b>Step 17:</b> Setup is applying your choices. Windows is preparing the desktop environment for first use.');">Accept</button>
         </div>
       </div>
     </div>
@@ -775,6 +810,11 @@
 <div class="fine-print">Simulation for demonstration purposes only — not affiliated with or endorsed by Microsoft.</div>
 
 <script>
+/* ---- INSTRUCTION HELPER FUNCTION ---- */
+function setInstruction(text) {
+  document.getElementById('instruction-text').innerHTML = text;
+}
+
 let state = { name: "" };
 
 function go(step){
@@ -793,6 +833,7 @@ function submitName(){
   state.name = val;
   document.getElementById('pwdTitle').textContent = `Create a super memorable password`;
   go('password');
+  setInstruction('<b>Step 15:</b> Create a password, or click <b>Skip this step (no password)</b> to proceed without one.');
 }
 
 function skipPassword(){
@@ -807,8 +848,10 @@ function submitPassword(){
   err.style.display='none';
   if(p1.length === 0){
     go('privacy'); // no password -> security questions not needed
+    setInstruction('<b>Step 16:</b> Review the privacy settings. For the fastest setup, leave them as default and click <b>Accept</b>.');
   } else {
     go('secquestions');
+    setInstruction('<b>Step 15b:</b> Since you created a password, you must fill out three security questions before proceeding.');
   }
 }
 
@@ -837,6 +880,7 @@ function startFinalize(){
     setTimeout(()=>{
       document.getElementById('desktopGreeting').textContent = `Welcome${state.name ? ', ' + state.name : ''}`;
       go('desktop');
+      setInstruction('✅ <b>Lab Complete!</b> You have successfully navigated the Windows 11 installation and setup process.');
     }, 1800);
   }, 7000);
 }
@@ -950,9 +994,13 @@ function runInstall(){
       stages.forEach(s=> s.innerHTML = s.textContent.replace('○','✓'));
       setTimeout(()=>{
         go('wsRestart');
+        setInstruction('<b>Step 9:</b> Installation is complete. The system is rebooting into the Windows Out-of-Box Experience (OOBE).');
         setTimeout(()=>{
           go('boot');
-          setTimeout(()=>go('language'), 1800);
+          setTimeout(()=>{
+            go('language');
+            setInstruction('<b>Step 9:</b> OOBE begins. Confirm your Language preference and click <b>Yes</b>.');
+          }, 1800);
         }, 2600);
       }, 700);
     }
