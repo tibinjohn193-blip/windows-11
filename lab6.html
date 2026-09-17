@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windows 11 Network Ping Simulation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f3f3f3;
+            margin: 0;
+            padding: 20px;
+            color: #202020;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+        #instruction-panel {
+            background-color: #005fb8;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 900px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            font-weight: 500;
+        }
+        .network-env {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px;
+            flex-grow: 1;
+        }
+        .pc-container {
+            background-color: #ffffff;
+            flex: 1;
+            border-radius: 12px;
+            position: relative;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid #e5e5e5;
+        }
+        .pc-header {
+            background-color: #fafafa;
+            color: #333;
+            padding: 12px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 16px;
+            border-bottom: 1px solid #e5e5e5;
+        }
+        .desktop {
+            flex-grow: 1;
+            position: relative;
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        /* Win 11 Taskbar */
+        .taskbar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 48px;
+            background-color: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+        .btn-win-r {
+            background-color: #ffffff;
+            color: #202020;
+            border: 1px solid #d1d1d1;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-win-r:hover { background-color: #f3f3f3; }
+        
+        /* Windows */
+        .window {
+            background: rgba(255, 255, 255, 0.98);
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: 8px;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.2);
+            position: absolute;
+            top: 5%;
+            left: 5%;
+            width: 90%;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            animation: fadeIn 0.2s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .window-header {
+            padding: 8px 15px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #fff;
+            border-bottom: 1px solid #eee;
+            color: #333;
+        }
+        .window-controls span {
+            width: 12px; height: 1px; background: #999; display: inline-block; margin-left: 5px;
+        }
+        .window-content { padding: 15px; font-size: 13px; flex-grow: 1; overflow: auto; background-color: #fff; }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 6px 10px;
+            box-sizing: border-box;
+            border: 1px solid #d1d1d1;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+        input[type="text"]:focus {
+            border-color: #005fb8;
+            outline: 2px solid rgba(0, 95, 184, 0.3);
+        }
+        
+        .btn-group { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; }
+        button.action-btn {
+            padding: 6px 20px;
+            background-color: #f3f3f3;
+            color: #202020;
+            border: 1px solid #d1d1d1;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        button.action-btn.primary { background-color: #005fb8; color: white; border: 1px solid #005fb8; }
+        button.action-btn:hover { background-color: #e5e5e5; }
+        
+        /* Network Connections (ncpa.cpl) */
+        .ncpa-container { display: flex; flex-wrap: wrap; gap: 20px; padding: 10px; }
+        .adapter {
+            width: 90px; text-align: center; cursor: pointer; padding: 10px; border-radius: 4px; border: 1px solid transparent;
+        }
+        .adapter:hover { background-color: #e5f3ff; border: 1px solid #cce8ff; }
+        .adapter svg { width: 40px; height: 40px; margin-bottom: 5px; color: #0078D4; }
+        .adapter-name { font-size: 12px; font-weight: 500; }
+        .adapter-status { font-size: 11px; color: #666; }
+        
+        /* Context Menu */
+        .context-menu {
+            position: absolute;
+            background: #fff;
+            border: 1px solid #ccc;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.2);
+            border-radius: 4px;
+            padding: 5px 0;
+            display: none;
+            z-index: 100;
+            width: 150px;
+        }
+        .context-menu-item {
+            padding: 8px 15px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .context-menu-item:hover { background-color: #e5f3ff; }
+
+        /* Ethernet Properties */
+        .prop-list {
+            border: 1px solid #ccc;
+            height: 120px;
+            overflow-y: scroll;
+            margin: 10px 0;
+            background: #fff;
+        }
+        .prop-item {
+            padding: 4px 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .prop-item.selected { background-color: #0078D4; color: white; }
+        
+        /* Terminal */
+        .cmd-window {
+            background-color: rgba(28, 33, 40, 0.95);
+            color: #cccccc;
+            font-family: 'Consolas', monospace;
+            height: 250px;
+        }
+        .cmd-window .window-header { background-color: #000; color: #fff; }
+        .cmd-content { padding: 10px; font-size: 12px; }
+        .cmd-input-line { display: flex; }
+        .cmd-input { background: transparent; border: none; color: #fff; outline: none; flex-grow: 1; font-family: 'Consolas', monospace; }
+
+        /* Label adjustments for IPv4 properties */
+        .ip-field-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .ip-field-row label {
+            width: 140px;
+            text-align: right;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="instruction-panel">
+        Step 1: On PC1, click the 'Press Win + R' button below.
+    </div>
+
+    <div class="network-env">
+        <!-- PC 1 -->
+        <div class="pc-container" id="pc1-env">
+            <div class="pc-header">PC 1</div>
+            <div class="desktop" onclick="hideContextMenu('pc1')">
+                
+                <!-- Run Dialog -->
+                <div class="window" id="run-pc1" style="z-index: 20;">
+                    <div class="window-header"><span>Run</span><div class="window-controls"><span></span><span></span></div></div>
+                    <div class="window-content">
+                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px;">
+                            <label style="font-weight:500;">Open:</label>
+                            <input type="text" id="run-input-pc1">
+                        </div>
+                        <div class="btn-group">
+                            <button class="action-btn primary" onclick="executeRun('pc1')">OK</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Network Connections (ncpa.cpl) -->
+                <div class="window" id="ncpa-pc1" style="z-index: 15; height: 300px;">
+                    <div class="window-header"><span>Network Connections</span><div class="window-controls"><span></span><span></span></div></div>
+                    <div class="window-content">
+                        <div class="ncpa-container">
+                            <div class="adapter" oncontextmenu="showContextMenu(event, 'pc1'); return false;">
+                                <svg fill="currentColor" viewBox="0 0 24 24"><path d="M20,18H22V20H20V22H18V20H16V18H18V16H20V18M14,18V15H10V11H14V8H10V4H4V8H8V11H4V15H8V18H4V22H10V18H14Z"/></svg>
+                                <div class="adapter-name">Ethernet</div>
+                                <div class="adapter-status">Network</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Context Menu -->
+                    <div class="context-menu" id="ctx-pc1">
+                        <div class="context-menu-item">Status</div>
+                        <div class="context-menu-item">Disable</div>
+                        <hr style="margin:2px 0; border:0; border-top:1px solid #ccc;">
+                        <div class="context-menu-item" onclick="openEthProps('pc1')">Properties</div>
+                    </div>
+                </div>
+
+                <!-- Ethernet Properties -->
+                <div class="window" id="eth-props-pc1" style="z-index: 25; width: 75%; left: 12.5%;">
+                    <div class="window-header"><span>Ethernet Properties</span></div>
+                    <div class="window-content">
+                        <p style="margin-top:0;">This connection uses the following items:</p>
+                        <div class="prop-list">
+                            <div class="prop-item"><input type="checkbox" checked> Client for Microsoft Networks</div>
+                            <div class="prop-item"><input type="checkbox" checked> File and Printer Sharing for Microsoft Networks</div>
+                            <div class="prop-item"><input type="checkbox" checked> QoS Packet Scheduler</div>
+                            <div class="prop-item" id="ipv4-item-pc1" onclick="selectIPv4('pc1')"><input type="checkbox" checked> Internet Protocol Version 4 (TCP/IPv4)</div>
+                        </div>
+                        <div class="btn-group">
+                            <button class="action-btn" onclick="openIPProps('pc1')">Properties</button>
+                            <button class="action-btn" onclick="closeWindow('eth-props-pc1')">OK</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- IPv4 Properties -->
+                <div class="window" id="ip-props-pc1" style="z-index: 30; width: 90%; left: 5%;">
+                    <div class="window-header"><span>Internet Protocol Version 4 (TCP/IPv4) Properties</span></div>
+                    <div class="window-content" style="max-height: 380px;">
+                        <div><input type="radio" checked> Use the following IP address:</div>
+                        <div style="margin-top:10px; padding-left: 20px;">
+                            <div class="ip-field-row"><label>IP address:</label><input type="text" id="ip-pc1" placeholder="192.168.1.1"></div>
+                            <div class="ip-field-row"><label>Subnet mask:</label><input type="text" id="subnet-pc1" placeholder="255.255.255.0"></div>
+                            <div class="ip-field-row"><label>Default gateway:</label><input type="text" id="gateway-pc1"></div>
+                        </div>
+                        
+                        <div style="margin-top:20px;"><input type="radio" checked> Use the following DNS server addresses:</div>
+                        <div style="margin-top:10px; padding-left: 20px;">
+                            <div class="ip-field-row"><label>Preferred DNS server:</label><input type="text" id="dns1-pc1"></div>
+                            <div class="ip-field-row"><label>Alternate DNS server:</label><input type="text" id="dns2-pc1"></div>
+                        </div>
+
+                        <div class="btn-group"><button class="action-btn primary" onclick="saveIP('pc1')">OK</button></div>
+                    </div>
+                </div>
+
+                <!-- Terminal -->
+                <div class="window cmd-window" id="cmd-pc1" style="z-index: 35;">
+                    <div class="window-header"><span>Command Prompt</span></div>
+                    <div class="cmd-content" id="cmd-output-pc1">
+                        <div>Microsoft Windows [Version 10.0.22621.1702]</div><br>
+                        <div class="cmd-input-line">
+                            <span>C:\Users\PC1></span>
+                            <input type="text" class="cmd-input" id="cmd-input-pc1" onkeypress="handleCmd(event, 'pc1')">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="taskbar">
+                    <button class="btn-win-r" onclick="openRun('pc1')">
+                        <svg width="16" height="16" viewBox="0 0 88 88" fill="none"><path d="M0 12.402L37.16 7.151V41.761H0V12.402ZM41.802 6.505L88 0V41.761H41.802V6.505ZM0 46.216H37.16V80.826L0 75.575V46.216ZM41.802 46.216H88V88L41.802 81.472V46.216Z" fill="#0078D4"/></svg>
+                        Press Win + R
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- PC 2 -->
+        <div class="pc-container" id="pc2-env">
+            <div class="pc-header">PC 2</div>
+            <div class="desktop" onclick="hideContextMenu('pc2')">
+                
+                <!-- Run Dialog -->
+                <div class="window" id="run-pc2" style="z-index: 20;">
+                    <div class="window-header"><span>Run</span><div class="window-controls"><span></span><span></span></div></div>
+                    <div class="window-content">
+                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px;">
+                            <label style="font-weight:500;">Open:</label>
+                            <input type="text" id="run-input-pc2">
+                        </div>
+                        <div class="btn-group">
+                            <button class="action-btn primary" onclick="executeRun('pc2')">OK</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Network Connections (ncpa.cpl) -->
+                <div class="window" id="ncpa-pc2" style="z-index: 15; height: 300px;">
+                    <div class="window-header"><span>Network Connections</span><div class="window-controls"><span></span><span></span></div></div>
+                    <div class="window-content">
+                        <div class="ncpa-container">
+                            <div class="adapter" oncontextmenu="showContextMenu(event, 'pc2'); return false;">
+                                <svg fill="currentColor" viewBox="0 0 24 24"><path d="M20,18H22V20H20V22H18V20H16V18H18V16H20V18M14,18V15H10V11H14V8H10V4H4V8H8V11H4V15H8V18H4V22H10V18H14Z"/></svg>
+                                <div class="adapter-name">Ethernet</div>
+                                <div class="adapter-status">Network</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Context Menu -->
+                    <div class="context-menu" id="ctx-pc2">
+                        <div class="context-menu-item">Status</div>
+                        <div class="context-menu-item">Disable</div>
+                        <hr style="margin:2px 0; border:0; border-top:1px solid #ccc;">
+                        <div class="context-menu-item" onclick="openEthProps('pc2')">Properties</div>
+                    </div>
+                </div>
+
+                <!-- Ethernet Properties -->
+                <div class="window" id="eth-props-pc2" style="z-index: 25; width: 75%; left: 12.5%;">
+                    <div class="window-header"><span>Ethernet Properties</span></div>
+                    <div class="window-content">
+                        <p style="margin-top:0;">This connection uses the following items:</p>
+                        <div class="prop-list">
+                            <div class="prop-item"><input type="checkbox" checked> Client for Microsoft Networks</div>
+                            <div class="prop-item"><input type="checkbox" checked> File and Printer Sharing for Microsoft Networks</div>
+                            <div class="prop-item"><input type="checkbox" checked> QoS Packet Scheduler</div>
+                            <div class="prop-item" id="ipv4-item-pc2" onclick="selectIPv4('pc2')"><input type="checkbox" checked> Internet Protocol Version 4 (TCP/IPv4)</div>
+                        </div>
+                        <div class="btn-group">
+                            <button class="action-btn" onclick="openIPProps('pc2')">Properties</button>
+                            <button class="action-btn" onclick="closeWindow('eth-props-pc2')">OK</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- IPv4 Properties -->
+                <div class="window" id="ip-props-pc2" style="z-index: 30; width: 90%; left: 5%;">
+                    <div class="window-header"><span>Internet Protocol Version 4 (TCP/IPv4) Properties</span></div>
+                    <div class="window-content" style="max-height: 380px;">
+                        <div><input type="radio" checked> Use the following IP address:</div>
+                        <div style="margin-top:10px; padding-left: 20px;">
+                            <div class="ip-field-row"><label>IP address:</label><input type="text" id="ip-pc2" placeholder="192.168.1.2"></div>
+                            <div class="ip-field-row"><label>Subnet mask:</label><input type="text" id="subnet-pc2" placeholder="255.255.255.0"></div>
+                            <div class="ip-field-row"><label>Default gateway:</label><input type="text" id="gateway-pc2"></div>
+                        </div>
+                        
+                        <div style="margin-top:20px;"><input type="radio" checked> Use the following DNS server addresses:</div>
+                        <div style="margin-top:10px; padding-left: 20px;">
+                            <div class="ip-field-row"><label>Preferred DNS server:</label><input type="text" id="dns1-pc2"></div>
+                            <div class="ip-field-row"><label>Alternate DNS server:</label><input type="text" id="dns2-pc2"></div>
+                        </div>
+
+                        <div class="btn-group"><button class="action-btn primary" onclick="saveIP('pc2')">OK</button></div>
+                    </div>
+                </div>
+
+                <!-- Terminal -->
+                <div class="window cmd-window" id="cmd-pc2" style="z-index: 35;">
+                    <div class="window-header"><span>Command Prompt</span></div>
+                    <div class="cmd-content" id="cmd-output-pc2">
+                        <div>Microsoft Windows [Version 10.0.22621.1702]</div><br>
+                        <div class="cmd-input-line">
+                            <span>C:\Users\PC2></span>
+                            <input type="text" class="cmd-input" id="cmd-input-pc2" onkeypress="handleCmd(event, 'pc2')">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="taskbar">
+                    <button class="btn-win-r" onclick="openRun('pc2')">
+                        <svg width="16" height="16" viewBox="0 0 88 88" fill="none"><path d="M0 12.402L37.16 7.151V41.761H0V12.402ZM41.802 6.505L88 0V41.761H41.802V6.505ZM0 46.216H37.16V80.826L0 75.575V46.216ZM41.802 46.216H88V88L41.802 81.472V46.216Z" fill="#0078D4"/></svg>
+                        Press Win + R
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        let pc1Configured = false;
+        let pc2Configured = false;
+        let selectedIPv4 = { pc1: false, pc2: false };
+
+        const instructions = {
+            1: "Step 1: On PC1, click the 'Press Win + R' button.",
+            2: "Step 2: Type 'ncpa.cpl' in the Run box and click OK.",
+            3: "Step 3: Right-click on the 'Ethernet' adapter and select 'Properties'.",
+            4: "Step 4: Select 'Internet Protocol Version 4 (TCP/IPv4)' and click 'Properties'.",
+            5: "Step 5: Enter IP '192.168.1.1', Subnet Mask '255.255.255.0' and click OK.",
+            6: "Step 6: On PC2, click the 'Press Win + R' button.",
+            7: "Step 7: Type 'ncpa.cpl' in the Run box and click OK.",
+            8: "Step 8: Right-click on the 'Ethernet' adapter and select 'Properties'.",
+            9: "Step 9: Select 'Internet Protocol Version 4 (TCP/IPv4)' and click 'Properties'.",
+            10: "Step 10: Enter IP '192.168.1.2', Subnet Mask '255.255.255.0' and click OK.",
+            11: "Step 11: On PC1, click the 'Press Win + R' button again.",
+            12: "Step 12: Type 'cmd' in the Run box and click OK.",
+            13: "Step 13: In PC1 Command Prompt, type 'ping 192.168.1.2' and press Enter.",
+            14: "Step 14: On PC2, click the 'Press Win + R' button again.",
+            15: "Step 15: Type 'cmd' in the Run box and click OK.",
+            16: "Step 16: In PC2 Command Prompt, type 'ping 192.168.1.1' and press Enter.",
+            17: "Congratulations! The simulation is successfully completed."
+        };
+
+        function updateInstruction(step) {
+            currentStep = step;
+            let panel = document.getElementById("instruction-panel");
+            panel.innerText = instructions[currentStep];
+            if(step === 17) {
+                panel.style.backgroundColor = "#107c10";
+            }
+        }
+
+        function closeWindow(id) { document.getElementById(id).style.display = "none"; }
+
+        function openRun(pc) {
+            document.getElementById(`run-${pc}`).style.display = "flex";
+            document.getElementById(`run-input-${pc}`).focus();
+            if(pc === 'pc1' && currentStep === 1) updateInstruction(2);
+            if(pc === 'pc2' && currentStep === 6) updateInstruction(7);
+            if(pc === 'pc1' && currentStep === 11) updateInstruction(12);
+            if(pc === 'pc2' && currentStep === 14) updateInstruction(15);
+        }
+
+        function executeRun(pc) {
+            let cmd = document.getElementById(`run-input-${pc}`).value.toLowerCase().trim();
+            closeWindow(`run-${pc}`);
+            document.getElementById(`run-input-${pc}`).value = "";
+
+            if (cmd === "ncpa.cpl") {
+                document.getElementById(`ncpa-${pc}`).style.display = "flex";
+                if(pc === 'pc1' && currentStep === 2) updateInstruction(3);
+                if(pc === 'pc2' && currentStep === 7) updateInstruction(8);
+            } else if (cmd === "cmd") {
+                document.getElementById(`cmd-${pc}`).style.display = "flex";
+                document.getElementById(`cmd-input-${pc}`).focus();
+                if(pc === 'pc1' && currentStep === 12) updateInstruction(13);
+                if(pc === 'pc2' && currentStep === 15) updateInstruction(16);
+            } else {
+                alert("Invalid command. Type 'ncpa.cpl' or 'cmd'.");
+            }
+        }
+
+        function showContextMenu(event, pc) {
+            event.preventDefault();
+            let ctx = document.getElementById(`ctx-${pc}`);
+            let rect = document.getElementById(`ncpa-${pc}`).getBoundingClientRect();
+            ctx.style.left = (event.clientX - rect.left) + "px";
+            ctx.style.top = (event.clientY - rect.top) + "px";
+            ctx.style.display = "block";
+        }
+
+        function hideContextMenu(pc) {
+            document.getElementById(`ctx-${pc}`).style.display = "none";
+        }
+
+        function openEthProps(pc) {
+            hideContextMenu(pc);
+            document.getElementById(`eth-props-${pc}`).style.display = "flex";
+            if(pc === 'pc1' && currentStep === 3) updateInstruction(4);
+            if(pc === 'pc2' && currentStep === 8) updateInstruction(9);
+        }
+
+        function selectIPv4(pc) {
+            let item = document.getElementById(`ipv4-item-${pc}`);
+            item.classList.add('selected');
+            selectedIPv4[pc] = true;
+        }
+
+        function openIPProps(pc) {
+            if (selectedIPv4[pc]) {
+                document.getElementById(`ip-props-${pc}`).style.display = "flex";
+            } else {
+                alert("Please select 'Internet Protocol Version 4 (TCP/IPv4)' first.");
+            }
+        }
+
+        function saveIP(pc) {
+            let ip = document.getElementById(`ip-${pc}`).value.replace(/\s+/g, '').trim();
+            let subnet = document.getElementById(`subnet-${pc}`).value.replace(/\s+/g, '').trim();
+            
+            // Gateway and DNS fields are now available but not strictly validated to allow 
+            // the simulation to complete smoothly with just IP and Subnet mask like before.
+            
+            if (pc === 'pc1' && ip === "192.168.1.1" && subnet === "255.255.255.0") {
+                pc1Configured = true;
+                closeWindow(`ip-props-${pc}`);
+                closeWindow(`eth-props-${pc}`);
+                closeWindow(`ncpa-${pc}`);
+                if(currentStep === 4 || currentStep === 5) updateInstruction(6);
+            } else if (pc === 'pc2' && ip === "192.168.1.2" && subnet === "255.255.255.0") {
+                pc2Configured = true;
+                closeWindow(`ip-props-${pc}`);
+                closeWindow(`eth-props-${pc}`);
+                closeWindow(`ncpa-${pc}`);
+                if(currentStep === 9 || currentStep === 10) updateInstruction(11);
+            } else {
+                alert("Incorrect IP or Subnet Mask. Please use 192.168.1.1 (PC1) / 192.168.1.2 (PC2) and 255.255.255.0");
+            }
+        }
+
+        function handleCmd(e, pc) {
+            if (e.key === 'Enter') {
+                let inputLine = document.getElementById(`cmd-input-${pc}`);
+                let cmdText = inputLine.value.trim().toLowerCase();
+                let outputDiv = document.getElementById(`cmd-output-${pc}`);
+                
+                inputLine.parentElement.remove();
+                outputDiv.innerHTML += `<div>C:\\Users\\${pc.toUpperCase()}>${cmdText}</div>`;
+
+                if (cmdText.startsWith("ping")) {
+                    let targetIP = cmdText.split(" ")[1];
+                    let expectedIP = pc === 'pc1' ? "192.168.1.2" : "192.168.1.1";
+                    
+                    if (targetIP === expectedIP) {
+                        if (pc1Configured && pc2Configured) {
+                            outputDiv.innerHTML += `
+                                <div><br>Pinging ${targetIP} with 32 bytes of data:</div>
+                                <div>Reply from ${targetIP}: bytes=32 time&lt;1ms TTL=128</div>
+                                <div>Reply from ${targetIP}: bytes=32 time&lt;1ms TTL=128</div>
+                                <div>Reply from ${targetIP}: bytes=32 time&lt;1ms TTL=128</div>
+                                <div>Reply from ${targetIP}: bytes=32 time&lt;1ms TTL=128</div>
+                                <div><br>Ping statistics for ${targetIP}:</div>
+                                <div>&nbsp;&nbsp;&nbsp;&nbsp;Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),</div><br>`;
+                                
+                            if(pc === 'pc1' && currentStep === 13) updateInstruction(14);
+                            if(pc === 'pc2' && currentStep === 16) updateInstruction(17);
+                        } else {
+                            outputDiv.innerHTML += `<div><br>Pinging ${targetIP} with 32 bytes of data:</div><div>Request timed out.</div><br>`;
+                        }
+                    } else {
+                        outputDiv.innerHTML += `<div>Ping request could not find host ${targetIP}. Please check the name and try again.</div><br>`;
+                    }
+                } else if (cmdText !== "") {
+                    outputDiv.innerHTML += `<div>'${cmdText}' is not recognized as an internal or external command, operable program or batch file.</div><br>`;
+                }
+
+                outputDiv.innerHTML += `
+                    <div class="cmd-input-line">
+                        <span>C:\\Users\\${pc.toUpperCase()}></span>
+                        <input type="text" class="cmd-input" id="cmd-input-${pc}" onkeypress="handleCmd(event, '${pc}')">
+                    </div>`;
+                
+                let newInput = document.getElementById(`cmd-input-${pc}`);
+                newInput.focus();
+                outputDiv.scrollTop = outputDiv.scrollHeight;
+            }
+        }
+    </script>
+</body>
+</html>
