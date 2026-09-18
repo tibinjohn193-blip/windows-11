@@ -24,3 +24,5 @@ Interactive, browser-based simulations of common Windows 11 Pro setup and admini
 
 [🛠️LAB 10: Windows 11 Network Folder Sharing & Permissions](lab10.md)
 
+[🛠️LAB 11 Windows 11 Malicious Software Removal Tool (MRT) Scan Lab](lab11.md)
+
