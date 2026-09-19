@@ -30,3 +30,5 @@ Interactive, browser-based simulations of common Windows 11 Pro setup and admini
 
 [🛠️LAB 13 Recovering a Locked BitLocker Drive in Windows 11](lab13.md)
 
+[🛠️LAB 14 Configuring Windows Defender Firewall & Inbound Rules](lab14.md)
+
