@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Windows 11 BitLocker Password Unlock Lab</title>
+<style>
+    :root {
+        --win-bg: url('https://images.unsplash.com/photo-1617471346061-5d329ab9c574?q=80&w=1920&auto=format&fit=crop');
+        --taskbar-bg: rgba(20, 20, 20, 0.85);
+        --accent: #0067C0;
+    }
+
+    body, html {
+        margin: 0; padding: 0; width: 100%; height: 100%;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        overflow: hidden; background-color: #000; user-select: none;
+    }
+
+    #desktop {
+        width: 100%; height: 100%; background: var(--win-bg) no-repeat center center fixed;
+        background-size: cover; position: relative;
+    }
+
+    /* Instruction Panel */
+    #instruction-panel {
+        position: absolute; top: 20px; left: 20px; width: 340px;
+        background: rgba(255, 255, 255, 0.95); border: 3px solid var(--accent);
+        border-radius: 8px; padding: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+        z-index: 10000; color: #1B1B1B;
+    }
+    #instruction-panel h3 { margin: 0 0 10px 0; font-size: 15px; color: var(--accent); }
+    #instruction-text { margin: 0; font-size: 13.5px; line-height: 1.6; }
+    #instruction-text code { background: #e0e0e0; padding: 2px 5px; border-radius: 4px; font-weight: bold; color: #d84315; }
+
+    /* Taskbar */
+    .taskbar {
+        position: absolute; bottom: 0; left: 0; right: 0; height: 50px;
+        background: var(--taskbar-bg); backdrop-filter: blur(20px);
+        display: flex; align-items: center; justify-content: center; gap: 15px; z-index: 8000;
+    }
+    .tb-icon {
+        width: 36px; height: 36px; border-radius: 4px; display: flex;
+        align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; font-size: 20px; color: white;
+    }
+    .tb-icon:hover { background: rgba(255, 255, 255, 0.1); }
+
+    /* Start Menu */
+    #start-menu {
+        position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%);
+        width: 600px; height: 500px; background: rgba(243, 243, 243, 0.95);
+        backdrop-filter: blur(20px); border-radius: 10px; box-shadow: 0 5px 30px rgba(0,0,0,0.4);
+        display: none; flex-direction: column; padding: 30px 30px 0 30px; z-index: 7500; border: 1px solid #ccc;
+    }
+    #start-menu.show { display: flex; }
+    .sm-search-input { width: 100%; padding: 10px 15px; border-radius: 20px; border: 1px solid #ccc; font-size: 14px; margin-bottom: 20px; outline: none; background: #fff;}
+    .sm-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 15px; flex-grow: 1;}
+    .sm-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; padding: 10px 5px; border-radius: 5px; text-align: center; height: 70px;}
+    .sm-item:hover { background: rgba(0,0,0,0.05); }
+    .sm-item .icon { font-size: 32px; margin-bottom: 8px;}
+    .sm-item .text { font-size: 11px; }
+
+    .sm-footer { border-top: 1px solid #ccc; padding: 15px 0; display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
+    .sm-user { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 5px 10px; border-radius: 5px; font-size: 13px; font-weight: 500; position: relative;}
+    .sm-user:hover { background: rgba(0,0,0,0.05); }
+    .user-avatar-small { width: 30px; height: 30px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; color: white;}
+    
+    .sm-user-menu {
+        position: absolute; bottom: 45px; left: 0; background: #fff; border: 1px solid #ccc; border-radius: 5px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        display: none; flex-direction: column; padding: 5px 0; z-index: 7600; min-width: 150px;
+    }
+    .sm-user-menu div { padding: 10px 15px; cursor: pointer; font-size: 13px; color: #333; }
+    .sm-user-menu div:hover { background: #f0f0f0; }
+
+    /* Login Screen Overlay */
+    #login-screen {
+        position: absolute; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(15px);
+        z-index: 9500; display: none; flex-direction: column; align-items: center; justify-content: center; color: white;
+    }
+    .user-avatar-large { width: 100px; height: 100px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; margin-bottom: 15px; color:white; }
+    
+    /* Windows Base */
+    .window {
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        background: #fff; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        display: none; flex-direction: column; overflow: hidden; border: 1px solid #ccc; z-index: 5000;
+    }
+    .window.show { display: flex; }
+    .win-header {
+        height: 32px; background: #f3f3f3; display: flex; align-items: center; justify-content: space-between;
+        padding: 0 10px; font-size: 12px; border-bottom: 1px solid #e1e1e1; flex-shrink: 0;
+    }
+    .win-title { display: flex; align-items: center; gap: 8px; }
+    .win-controls span { padding: 5px 10px; cursor: pointer; }
+    .win-controls span:hover { background: #e81123; color: white; }
+    .win-footer { background: #f0f0f0; padding: 15px; text-align: right; border-top: 1px solid #ddd; flex-shrink: 0; }
+    .btn { padding: 6px 20px; border: 1px solid #ccc; background: #fff; border-radius: 4px; cursor: pointer; margin-left: 10px; font-family: inherit;}
+    .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
+    .btn:disabled { color: #999; cursor: not-allowed; background: #f9f9f9;}
+
+    /* File Explorer */
+    #explorer-win { width: 850px; height: 500px; z-index: 5001; }
+    .exp-toolbar { padding: 10px; background: #fff; border-bottom: 1px solid #ddd; display: flex; gap: 10px; align-items: center; flex-shrink: 0;}
+    .exp-address { flex-grow: 1; padding: 5px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; background: #f9f9f9; }
+    .exp-body { display: flex; flex-grow: 1; height: 0; }
+    .exp-sidebar { width: 180px; border-right: 1px solid #ddd; padding: 10px; background: #f3f3f3; font-size: 13px; overflow-y: auto; }
+    .exp-content { flex-grow: 1; padding: 20px; background: #fff; display: flex; align-content: flex-start; gap: 20px; flex-wrap: wrap; overflow-y: auto; position: relative;}
+    .nav-item { padding: 5px; cursor: pointer; border-radius: 4px; display: flex; align-items: center; gap: 8px; }
+    .nav-item:hover { background: #e5f1fb; }
+    .nav-item.active { background: #cce8ff; }
+    
+    .file-icon { display: flex; flex-direction: column; align-items: center; width: 90px; padding: 10px; cursor: pointer; border-radius: 5px; border: 1px solid transparent; }
+    .file-icon:hover { background: #e5f1fb; border-color: #cce8ff; }
+    .file-icon.selected { background: #cce8ff; border-color: #99d1ff; }
+    .file-icon .icon { font-size: 45px; margin-bottom: 5px; position:relative;}
+    .file-icon .text { font-size: 12px; text-align: center; word-wrap: break-word; }
+    
+    .bl-badge { position: absolute; font-size: 20px; top: 15px; right: -5px; text-shadow: 0 0 2px white; }
+    .locked-drive { filter: grayscale(50%); } 
+
+    /* Context Menu */
+    #context-menu {
+        position: absolute; background: #fff; border: 1px solid #ccc; box-shadow: 2px 2px 10px rgba(0,0,0,0.2);
+        z-index: 9999; display: none; padding: 5px 0; border-radius: 4px; font-size: 13px; width: 200px;
+    }
+    .ctx-item { padding: 8px 15px; cursor: pointer; display: flex; align-items: center; gap: 10px;}
+    .ctx-item:hover { background: #e5f1fb; }
+
+    /* BitLocker Unlock Prompt */
+    #bl-unlock-win { 
+        position: absolute; top: 20px; right: 20px; left: auto; transform: none;
+        width: 380px; z-index: 6000; background:#003399; color:white; border:1px solid #002266; box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+    }
+    .bl-unlock-win .win-header { background: #002266; color: white; border-bottom:none; }
+    .bl-unlock-win .win-controls span:hover { background: #e81123; color: white; }
+    .unlock-input { width: 100%; padding: 10px; margin-top: 15px; margin-bottom: 20px; box-sizing:border-box; outline:none; border:none; border-radius:3px; font-size:14px; font-family: inherit;}
+    .unlock-link { color:#66b3ff; text-decoration:none; font-size:13px; cursor: pointer; display:block; margin-bottom: 10px;}
+    .unlock-link:hover { text-decoration: underline; }
+
+    /* BitLocker Wizard Window */
+    #bl-wizard { width: 550px; height: auto; min-height: 400px; z-index: 5100; }
+    .bl-body { padding: 20px; font-size: 13px; flex-grow: 1; }
+    .bl-body h2 { font-weight: normal; color: #003399; margin-top: 0; font-size: 18px; margin-bottom: 20px;}
+    .bl-option { padding: 15px; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px; cursor: pointer; display: flex; align-items: flex-start; gap: 10px; }
+    .bl-option:hover { background: #f9f9f9; border-color: var(--accent); }
+    .bl-option input[type="radio"] { margin-top: 3px; }
+    .bl-input-group { margin-top: 15px; margin-left: 25px; display: none; }
+    .bl-input-group input { width: 80%; padding: 6px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 3px;}
+    .bl-save-option { padding: 10px; font-size: 14px; color: #0067C0; cursor: pointer; margin-bottom: 5px; }
+    .bl-save-option:hover { text-decoration: underline; }
+
+    @keyframes slideLoad {
+        0% { margin-left: -20%; width: 20%; }
+        50% { width: 40%; }
+        100% { margin-left: 100%; width: 20%; }
+    }
+
+    /* Save Dialog */
+    #save-dialog { width: 600px; height: 400px; z-index: 5200; }
+    .sd-layout { display: flex; height: calc(100% - 90px); }
+    .sd-sidebar { width: 150px; border-right: 1px solid #ccc; padding: 10px; overflow-y: auto; font-size: 12px;}
+    .sd-content { flex-grow: 1; padding: 10px; overflow-y: auto; background: #fff;}
+    .sd-bottom { height: 90px; border-top: 1px solid #ccc; padding: 10px; background: #f0f0f0; display: flex; flex-direction: column; gap: 10px; font-size: 12px;}
+    .sd-row { display: flex; align-items: center; gap: 10px; }
+    .sd-row label { width: 80px; text-align: right; }
+    .sd-row input { flex-grow: 1; padding: 4px; border: 1px solid #ccc; }
+    
+    /* Control Panel (BitLocker Management) */
+    #cp-win { width: 800px; height: 550px; z-index: 5005; }
+    .cp-header-area { background: #fff; padding: 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 15px;}
+    .cp-body { padding: 20px; font-size: 13px; background: #fff; flex-grow: 1; overflow-y: auto;}
+    .drive-row { border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 5px; display: flex; align-items: flex-start;}
+    .drive-info { display: flex; gap: 15px; width: 300px;}
+    .drive-icon-large { font-size: 32px; position: relative; }
+    
+    .drive-actions { flex-grow: 1; border-left: 1px solid #eee; padding-left: 20px; }
+    .drive-actions a { display: block; color: #0067C0; text-decoration: none; margin-bottom: 10px; cursor: pointer; font-size: 13px;}
+    .drive-actions a:hover { text-decoration: underline; }
+    .da-disabled { color: #999 !important; cursor: not-allowed !important; text-decoration: none !important;}
+    
+    .progress-container { width: 100%; height: 20px; background: #eee; border: 1px solid #ccc; border-radius: 3px; overflow: hidden; margin-top: 20px;}
+    .progress-bar { width: 0%; height: 100%; background: #06b025; transition: width 0.2s; }
+
+    /* Confirm Turn Off Dialog */
+    #confirm-off-win { width: 450px; z-index: 6000; }
+</style>
+</head>
+<body onclick="hideContextAndUserMenu()">
+
+    <!-- INSTRUCTION PANEL -->
+    <div id="instruction-panel">
+        <h3>📋 Lab Guide</h3>
+        <p id="instruction-text"></p>
+    </div>
+
+    <!-- Login Screen Overlay -->
+    <div id="login-screen">
+        <div class="user-avatar-large">👨‍💻</div>
+        <h2 style="margin: 0 0 20px 0; font-weight: 500;">Administrator</h2>
+        <button class="btn btn-primary" style="font-size: 16px; padding: 10px 30px;" onclick="signIn()">Sign in</button>
+    </div>
+
+    <!-- Desktop -->
+    <div id="desktop">
+        
+        <!-- Taskbar -->
+        <div class="taskbar">
+            <div class="tb-icon" onclick="toggleStartMenu(event)" title="Start">🪟</div>
+            <div class="tb-icon" onclick="openExplorer()" title="File Explorer">📁</div>
+        </div>
+
+        <!-- Start Menu -->
+        <div id="start-menu" onclick="event.stopPropagation()">
+            <input type="text" class="sm-search-input" placeholder="Type here to search">
+            <div style="font-weight: bold; margin-bottom: 15px;">Pinned</div>
+            <div class="sm-grid">
+                <div class="sm-item"><div class="icon">⚙️</div><div class="text">Settings</div></div>
+                <div class="sm-item" onclick="openExplorer()"><div class="icon">📁</div><div class="text">Explorer</div></div>
+            </div>
+            
+            <div class="sm-footer">
+                <div class="sm-user" onclick="toggleUserMenu(event)">
+                    <div class="user-avatar-small">👨‍💻</div>
+                    <span>Administrator</span>
+                    <!-- User Menu Dropdown -->
+                    <div class="sm-user-menu" id="sm-user-menu">
+                        <div onclick="signOut()">Sign out</div>
+                        <div>Lock</div>
+                    </div>
+                </div>
+                <div style="font-size: 20px; padding: 5px 10px; cursor: pointer;">⏻</div>
+            </div>
+        </div>
+
+        <!-- File Explorer -->
+        <div class="window" id="explorer-win">
+            <div class="win-header">
+                <div class="win-title"><span>📁</span> <span id="exp-title">This PC</span></div>
+                <div class="win-controls"><span onclick="closeWin('explorer-win')">✖</span></div>
+            </div>
+            <div class="exp-toolbar">
+                <span style="font-size: 18px; cursor: pointer;">←</span>
+                <span style="font-size: 18px; cursor: pointer;">→</span>
+                <span style="font-size: 18px; cursor: pointer;">↑</span>
+                <div class="exp-address" id="exp-address">This PC</div>
+            </div>
+            <div class="exp-body">
+                <div class="exp-sidebar">
+                    <div class="nav-item active" id="nav-thispc" onclick="navTo('ThisPC')">🖥️ This PC</div>
+                    <div class="nav-item" style="margin-left: 15px;">💽 Local Disk (C:)</div>
+                    <div class="nav-item" style="margin-left: 15px;">💽 Data (D:)</div>
+                    <div class="nav-item" id="nav-e" style="margin-left: 15px;" onclick="navTo('E')">💽 Backup (E:)</div>
+                </div>
+                <div class="exp-content" id="exp-content">
+                    <!-- Drives added via JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- BitLocker Unlock Prompt -->
+        <div class="window bl-unlock-win" id="bl-unlock-win">
+            <div class="win-header">
+                <div class="win-title">BitLocker Drive Encryption</div>
+                <div class="win-controls"><span onclick="closeWin('bl-unlock-win')">✖</span></div>
+            </div>
+            <div style="padding: 20px;" id="bl-unlock-body">
+                <h3 style="margin-top:0; font-weight:normal; font-size:18px;">Enter password to unlock this drive</h3>
+                <input type="password" id="unlock-pass" class="unlock-input" placeholder="Password" onkeypress="if(event.key==='Enter') executeUnlock()">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <a href="#" class="unlock-link" onclick="alert('Simulation: We will cover Recovery Key unlocking in the next lab. Use your password here.')">More options</a>
+                    <button class="btn" style="background:#fff; color:#003399; border:none; font-weight:bold;" onclick="executeUnlock()">Unlock</button>
+                </div>
+                <p id="unlock-err" style="color:#ff9999; font-size:13px; display:none; margin-top:15px;">The password is incorrect.</p>
+            </div>
+        </div>
+
+        <!-- BitLocker Wizard Window -->
+        <div class="window" id="bl-wizard">
+            <div class="win-header">
+                <div class="win-title"><span>🔒</span> BitLocker Drive Encryption (D:)</div>
+                <div class="win-controls"><span onclick="closeWin('bl-wizard')">✖</span></div>
+            </div>
+            <div class="bl-body" id="bl-content">
+                <!-- Content injected dynamically -->
+            </div>
+            <div class="win-footer">
+                <button class="btn" id="bl-btn-back" onclick="blBack()" disabled>Back</button>
+                <button class="btn btn-primary" id="bl-btn-next" onclick="blNext()" disabled>Next</button>
+                <button class="btn" id="bl-btn-cancel" onclick="closeWin('bl-wizard')">Cancel</button>
+            </div>
+        </div>
+
+        <!-- Save Dialog Window -->
+        <div class="window" id="save-dialog">
+            <div class="win-header">
+                <div class="win-title">Save BitLocker Recovery Key</div>
+                <div class="win-controls"><span onclick="closeWin('save-dialog')">✖</span></div>
+            </div>
+            <div class="sd-layout">
+                <div class="sd-sidebar">
+                    <div class="nav-item" onclick="sdNav('C')">💽 Local Disk (C:)</div>
+                    <div class="nav-item" onclick="sdNav('D')">💽 Data (D:)</div>
+                    <div class="nav-item" id="sd-nav-e" onclick="sdNav('E')">💽 Backup (E:)</div>
+                </div>
+                <div class="sd-content" id="sd-content">
+                    <p style="color:#666; margin-top:50px; text-align:center;">Select a location to save.</p>
+                </div>
+            </div>
+            <div class="sd-bottom">
+                <div class="sd-row">
+                    <label>File name:</label>
+                    <input type="text" value="BitLocker Recovery Key 4F8A29.txt" readonly>
+                </div>
+                <div class="sd-row">
+                    <label>Save as type:</label>
+                    <input type="text" value="Text Document (*.txt)" readonly>
+                    <button class="btn btn-primary" style="margin-left:auto;" onclick="executeSaveKey()">Save</button>
+                    <button class="btn" onclick="closeWin('save-dialog')">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Control Panel (BitLocker Management) -->
+        <div class="window" id="cp-win">
+            <div class="win-header">
+                <div class="win-title"><span>⚙️</span> BitLocker Drive Encryption</div>
+                <div class="win-controls"><span onclick="closeWin('cp-win')">✖</span></div>
+            </div>
+            <div class="cp-header-area">
+                <div style="font-size: 40px;">🔒</div>
+                <div>
+                    <h2 style="margin:0; font-weight:normal; color:#003399;">BitLocker Drive Encryption</h2>
+                    <p style="margin:5px 0 0 0; color:#555;">Help protect your files and folders from unauthorized access by protecting your drives with BitLocker.</p>
+                </div>
+            </div>
+            <div class="cp-body">
+                <div style="font-weight:bold; margin-bottom:15px; border-bottom:1px solid #ccc; padding-bottom:5px;">Fixed data drives</div>
+                <div class="drive-row">
+                    <div class="drive-info">
+                        <div class="drive-icon-large">💽<span class="bl-badge" id="cp-badge-d" style="font-size:16px;"></span></div>
+                        <div>
+                            <strong>Data (D:)</strong><br>
+                            <span style="color:#666;" id="cp-status-d">BitLocker off</span>
+                        </div>
+                    </div>
+                    <div class="drive-actions" id="cp-actions-d">
+                        <!-- Dynamic Options -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirm Turn Off Dialog -->
+        <div class="window" id="confirm-off-win">
+            <div class="win-header">
+                <div class="win-title">BitLocker Drive Encryption</div>
+                <div class="win-controls"><span onclick="closeWin('confirm-off-win')">✖</span></div>
+            </div>
+            <div style="padding: 20px; font-size: 13px;">
+                <h3 style="margin-top:0; color:#003399; font-weight:normal; font-size:18px;">Turn off BitLocker</h3>
+                <p>Your drive will be decrypted. This might take a long time, but you can keep using your PC during the decryption process.</p>
+                <p>Are you sure you want to turn off BitLocker?</p>
+            </div>
+            <div class="win-footer">
+                <button class="btn btn-primary" onclick="executeTurnOff()">Turn off BitLocker</button>
+                <button class="btn" onclick="closeWin('confirm-off-win')">Cancel</button>
+            </div>
+        </div>
+
+        <!-- Context Menu -->
+        <div id="context-menu"></div>
+
+    </div>
+
+<script>
+    // State Variables
+    let currentStep = 1;
+    let blState = 'off'; // 'off', 'unlocked', 'locked'
+    let keySaved = false;
+    let blWizardStep = 0;
+    let sdCurrentDrive = '';
+
+    const instructions = {
+        1: "<b>Step 1:</b> Open <b>File Explorer (📁)</b> to view your drives.",
+        2: "<b>Step 2:</b> Right-click on <b>Data (D:)</b> and select <b>🔒 Turn on BitLocker</b>.",
+        3: "<b>Step 3:</b> Check <b>Use a password to unlock the drive</b>, type <code>123</code> in both boxes, and click <b>Next</b>.",
+        4: "<b>Step 4:</b> We need to backup the key. Click <b>Save to a file</b>.",
+        5: "<b>Step 5:</b> Select <b>Backup (E:)</b> on the left, then click <b>Save</b>.",
+        6: "<b>Step 6:</b> The key is saved! Click <b>Next</b>.",
+        7: "<b>Step 7:</b> Select <b>Encrypt used disk space only</b> and click <b>Next</b>.",
+        8: "<b>Step 8:</b> Select <b>New encryption mode</b> and click <b>Next</b>.",
+        9: "<b>Step 9:</b> We are ready. Click <b>Start encrypting</b>.",
+        10: "<b>Step 10:</b> The drive is encrypted! To lock it, we must sign out. Click the <b>Start (🪟)</b> button.",
+        11: "<b>Step 11 (Lock):</b> Click your <b>Administrator profile</b> at the bottom of the Start menu, and select <b>Sign out</b>.",
+        12: "<b>Step 12:</b> Click <b>Sign in</b> to log back in.",
+        13: "<b>Step 13:</b> Open <b>File Explorer</b>. Double-click the <b>Locked Data (D:)</b> drive.",
+        14: "<b>Step 14 (Unlock):</b> Enter your password (<code>123</code>) and click <b>Unlock</b>.",
+        15: "<b>Step 15 (Manage):</b> The drive is unlocked! Right-click Data (D:) and select <b>⚙️ Manage BitLocker</b>.",
+        16: "<b>Step 16:</b> The Control Panel opens showing the full BitLocker options. Click <b>Turn off BitLocker</b>.",
+        17: "<b>Step 17:</b> Click <b>Turn off BitLocker</b> on the prompt to decrypt.",
+        18: "✅ <b>Lab Complete!</b> You successfully encrypted, locked, unlocked via password, and disabled BitLocker."
+    };
+
+    function updateGuide() {
+        document.getElementById('instruction-text').innerHTML = instructions[currentStep];
+    }
+
+    // Start Menu & User Menu
+    function toggleStartMenu(e) {
+        e.stopPropagation();
+        hideContextAndUserMenu();
+        document.getElementById('start-menu').classList.toggle('show');
+        if(currentStep === 10) { currentStep = 11; updateGuide(); }
+    }
+
+    function toggleUserMenu(e) {
+        e.stopPropagation();
+        const menu = document.getElementById('sm-user-menu');
+        menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    function hideContextAndUserMenu() {
+        document.getElementById('context-menu').style.display = 'none';
+        document.getElementById('sm-user-menu').style.display = 'none';
+        document.getElementById('start-menu').classList.remove('show');
+    }
+
+    // Sign Out / Sign In
+    function signOut() {
+        hideContextAndUserMenu();
+        document.querySelectorAll('.window').forEach(w => w.classList.remove('show'));
+        if (blState === 'unlocked') { blState = 'locked'; }
+        document.getElementById('login-screen').style.display = 'flex';
+        if(currentStep === 11) { currentStep = 12; updateGuide(); }
+    }
+
+    function signIn() {
+        document.getElementById('login-screen').style.display = 'none';
+        if(currentStep === 12) { currentStep = 13; updateGuide(); }
+    }
+
+    // File Explorer Navigation
+    function openExplorer() {
+        document.getElementById('explorer-win').classList.add('show');
+        navTo('ThisPC');
+        if(currentStep === 1 || currentStep === 13) { 
+            if (currentStep === 1) currentStep = 2; 
+            updateGuide(); 
+        }
+    }
+
+    function closeWin(id) { document.getElementById(id).classList.remove('show'); }
+
+    function navTo(loc) {
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        const content = document.getElementById('exp-content');
+        const title = document.getElementById('exp-title');
+        const addr = document.getElementById('exp-address');
+
+        if(loc === 'ThisPC') {
+            document.getElementById('nav-thispc').classList.add('active');
+            title.innerText = "This PC"; addr.innerText = "This PC";
+            
+            let dBadge = ''; let dClass = 'file-icon';
+            if (blState === 'unlocked') { dBadge = '🔓'; } 
+            else if (blState === 'locked') { dBadge = '🔒'; dClass = 'file-icon locked-drive'; }
+            let dStyle = (blState !== 'off') ? 'display:inline;' : 'display:none;';
+
+            content.innerHTML = `
+                <div class="file-icon"><div class="icon">💽</div><div class="text">Local Disk (C:)</div></div>
+                <div class="${dClass}" ondblclick="dblClickDrive('D')" oncontextmenu="handleDriveRC(event, 'D')">
+                    <div class="icon">💽<span class="bl-badge" style="${dStyle}">${dBadge}</span></div>
+                    <div class="text">Data (D:)</div>
+                </div>
+                <div class="file-icon" oncontextmenu="handleDriveRC(event, 'E')">
+                    <div class="icon">💽</div><div class="text">Backup (E:)</div>
+                </div>
+            `;
+        }
+    }
+
+    // Drive Interaction (Click & RC)
+    function dblClickDrive(drive) {
+        if (drive === 'D' && blState === 'locked') {
+            document.getElementById('bl-unlock-win').classList.add('show');
+            document.getElementById('unlock-pass').value = '';
+            document.getElementById('unlock-err').style.display = 'none';
+            document.getElementById('unlock-pass').focus();
+            
+            // Fix: Trigger Step 14 correctly
+            if(currentStep === 13) { currentStep = 14; updateGuide(); }
+        }
+    }
+
+    function handleDriveRC(e, drive) {
+        e.preventDefault(); e.stopPropagation();
+        hideContextAndUserMenu();
+        
+        document.querySelectorAll('.file-icon').forEach(f => f.classList.remove('selected'));
+        e.currentTarget.classList.add('selected');
+
+        const menu = document.getElementById('context-menu');
+        menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px'; menu.style.display = 'block';
+        
+        let blOption = "";
+        if(drive === 'D') {
+            if(blState === 'off') {
+                blOption = `<div class="ctx-item" onclick="openBitlockerWizard()"><span>🔒</span> Turn on BitLocker</div>`;
+            } else if (blState === 'locked') {
+                blOption = `<div class="ctx-item" onclick="dblClickDrive('D')"><span>🔓</span> Unlock Drive...</div>
+                            <div class="ctx-item" onclick="openControlPanel()"><span>⚙️</span> Manage BitLocker</div>`;
+            } else if (blState === 'unlocked') {
+                blOption = `<div class="ctx-item" onclick="openControlPanel()"><span>⚙️</span> Manage BitLocker</div>`;
+            }
+        } else {
+            blOption = `<div class="ctx-item"><span>🔒</span> Turn on BitLocker</div>`;
+        }
+
+        menu.innerHTML = `
+            <div class="ctx-item">Open</div>
+            <div class="ctx-item">Open in new window</div>
+            <div class="ctx-item">Pin to Quick access</div>
+            <div style="border-top:1px solid #ccc; margin:3px 0;"></div>
+            ${blOption}
+            <div class="ctx-item">Format...</div>
+            <div style="border-top:1px solid #ccc; margin:3px 0;"></div>
+            <div class="ctx-item">Copy</div>
+            <div class="ctx-item">Rename</div>
+            <div style="border-top:1px solid #ccc; margin:3px 0;"></div>
+            <div class="ctx-item">Properties</div>`;
+    }
+
+    function hideContextMenu() { document.getElementById('context-menu').style.display = 'none'; }
+
+    // BitLocker Wizard Logic
+    function openBitlockerWizard() {
+        hideContextMenu();
+        closeWin('cp-win');
+        document.getElementById('bl-wizard').classList.add('show');
+        keySaved = false;
+        renderBlStep(0); 
+        if(currentStep === 2) { currentStep = 3; updateGuide(); }
+    }
+
+    function renderBlStep(step) {
+        blWizardStep = step;
+        const content = document.getElementById('bl-content');
+        const btnNext = document.getElementById('bl-btn-next');
+        const btnBack = document.getElementById('bl-btn-back');
+        const btnCancel = document.getElementById('bl-btn-cancel');
+
+        if(step === 0) {
+            content.innerHTML = `
+                <div style="text-align:center; padding: 40px 20px;">
+                    <h2 style="font-weight: normal; color: #003399; font-size: 22px; margin-bottom:10px;">Starting BitLocker...</h2>
+                    <p style="color:#555;">Please wait while BitLocker initializes the drive.</p>
+                    <div class="progress-container" style="width: 80%; margin: 20px auto; height: 8px; background:#ddd;">
+                        <div style="width: 20%; height: 100%; background: var(--accent); animation: slideLoad 1.5s infinite linear;"></div>
+                    </div>
+                </div>
+            `;
+            btnNext.style.display = 'none'; btnBack.style.display = 'none'; btnCancel.disabled = false;
+            setTimeout(() => { if(document.getElementById('bl-wizard').classList.contains('show')) renderBlStep(1); }, 2000);
+        }
+        else if(step === 1) {
+            btnNext.style.display = 'inline-block'; btnBack.style.display = 'inline-block';
+            btnBack.disabled = true; btnNext.disabled = true; btnNext.innerText = "Next";
+
+            content.innerHTML = `
+                <h2 style="font-weight:normal; color:#003399; margin-top:0; font-size:18px; margin-bottom:20px;">Choose how you want to unlock this drive</h2>
+                <label class="bl-option" style="padding:15px; border:1px solid #ccc; border-radius:5px; margin-bottom:10px; cursor:pointer; display:flex; align-items:flex-start; gap:10px;">
+                    <input type="checkbox" id="bl-cb-pass" onchange="toggleBlPass()" style="margin-top:3px;">
+                    <div>
+                        <strong>Use a password to unlock the drive</strong><br>
+                        Passwords should contain upper and lowercase letters, numbers, spaces, and symbols.
+                    </div>
+                </label>
+                <div id="bl-pass-group" style="margin-top:15px; margin-left:25px; display:none;">
+                    <label>Enter your password:</label><br>
+                    <input type="password" id="bl-p1" oninput="checkBlPass()" style="width:80%; padding:6px; margin-bottom:10px; border:1px solid #ccc; border-radius:3px;"><br>
+                    <label>Reenter your password:</label><br>
+                    <input type="password" id="bl-p2" oninput="checkBlPass()" style="width:80%; padding:6px; margin-bottom:10px; border:1px solid #ccc; border-radius:3px;"><br>
+                    <span id="bl-p-err" style="color:red; font-size:12px; display:none;">Passwords do not match.</span>
+                </div>
+            `;
+        } 
+        else if (step === 2) {
+            btnBack.disabled = false;
+            content.innerHTML = `
+                <h2 style="font-weight:normal; color:#003399; margin-top:0; font-size:18px; margin-bottom:20px;">How do you want to back up your recovery key?</h2>
+                <div style="margin-top:20px; border:1px solid #ccc; padding:15px; border-radius:5px; background:#f9f9f9;">
+                    <div style="padding:10px; font-size:14px; color:#0067C0; cursor:pointer; margin-bottom:5px;" onclick="openSaveDialog()"><b>Save to a file</b></div>
+                    <div style="padding:10px; font-size:14px; color:#0067C0; cursor:pointer; margin-bottom:5px;" onclick="alert('Simulation: Please select Save to a file.')">Print the recovery key</div>
+                </div>
+                <p style="margin-top:20px; color:${keySaved ? 'green' : '#666'};">
+                    ${keySaved ? '✅ Your recovery key has been saved.' : 'You must save the recovery key before you can continue.'}
+                </p>
+            `;
+            btnNext.disabled = !keySaved;
+            if(currentStep === 3) { currentStep = 4; updateGuide(); }
+        }
+        else if (step === 3) {
+            content.innerHTML = `
+                <h2 style="font-weight:normal; color:#003399; margin-top:0; font-size:18px; margin-bottom:20px;">Choose how much of your drive to encrypt</h2>
+                <label style="padding:15px; border:1px solid var(--accent); border-radius:5px; margin-bottom:10px; cursor:pointer; display:flex; align-items:flex-start; gap:10px; background:#f0f8ff;">
+                    <input type="radio" name="enc-space" checked style="margin-top:3px;">
+                    <div><strong>Encrypt used disk space only</strong></div>
+                </label>
+                <label style="padding:15px; border:1px solid #ccc; border-radius:5px; margin-bottom:10px; cursor:pointer; display:flex; align-items:flex-start; gap:10px;">
+                    <input type="radio" name="enc-space" style="margin-top:3px;"><div><strong>Encrypt entire drive</strong></div>
+                </label>
+            `;
+            btnNext.disabled = false;
+            if(currentStep === 6) { currentStep = 7; updateGuide(); }
+        }
+        else if (step === 4) {
+            content.innerHTML = `
+                <h2 style="font-weight:normal; color:#003399; margin-top:0; font-size:18px; margin-bottom:20px;">Choose which encryption mode to use</h2>
+                <label style="padding:15px; border:1px solid var(--accent); border-radius:5px; margin-bottom:10px; cursor:pointer; display:flex; align-items:flex-start; gap:10px; background:#f0f8ff;">
+                    <input type="radio" name="enc-mode" checked style="margin-top:3px;">
+                    <div><strong>New encryption mode</strong></div>
+                </label>
+                <label style="padding:15px; border:1px solid #ccc; border-radius:5px; margin-bottom:10px; cursor:pointer; display:flex; align-items:flex-start; gap:10px;">
+                    <input type="radio" name="enc-mode" style="margin-top:3px;"><div><strong>Compatible mode</strong></div>
+                </label>
+            `;
+            if(currentStep === 7) { currentStep = 8; updateGuide(); }
+        }
+        else if (step === 5) {
+            content.innerHTML = `
+                <h2 style="font-weight:normal; color:#003399; margin-top:0; font-size:18px; margin-bottom:20px;">Are you ready to encrypt this drive?</h2>
+                <p>Encryption might take a while depending on the size of the drive.</p>
+            `;
+            btnNext.innerText = "Start encrypting";
+            if(currentStep === 8) { currentStep = 9; updateGuide(); }
+        }
+        else if (step === 6) {
+            content.innerHTML = `
+                <h2 style="font-weight:normal; color:#003399; margin-top:0; font-size:18px; margin-bottom:20px;">Encrypting...</h2>
+                <div class="progress-container"><div class="progress-bar" id="bl-prog-bar"></div></div>
+                <p id="bl-prog-text" style="margin-top:10px;">0% Completed</p>
+            `;
+            btnNext.disabled = true; btnBack.disabled = true; btnCancel.disabled = true;
+            simulateEncryption();
+        }
+    }
+
+    function toggleBlPass() {
+        const cb = document.getElementById('bl-cb-pass');
+        const group = document.getElementById('bl-pass-group');
+        group.style.display = cb.checked ? 'block' : 'none';
+        checkBlPass();
+    }
+
+    function checkBlPass() {
+        const p1 = document.getElementById('bl-p1').value;
+        const p2 = document.getElementById('bl-p2').value;
+        const err = document.getElementById('bl-p-err');
+        const btnNext = document.getElementById('bl-btn-next');
+        const cb = document.getElementById('bl-cb-pass');
+
+        if(!cb.checked) { btnNext.disabled = true; err.style.display = 'none'; return; }
+
+        if(p1.length > 0 && p2.length > 0) {
+            if(p1 === p2) { err.style.display = 'none'; btnNext.disabled = false; } 
+            else { err.style.display = 'block'; btnNext.disabled = true; }
+        } else {
+            err.style.display = 'none'; btnNext.disabled = true;
+        }
+    }
+
+    function blNext() { if(blWizardStep < 6) renderBlStep(blWizardStep + 1); }
+    function blBack() { if(blWizardStep > 1) renderBlStep(blWizardStep - 1); }
+
+    function openSaveDialog() {
+        document.getElementById('save-dialog').classList.add('show');
+        sdNav('');
+        if(currentStep === 4) { currentStep = 5; updateGuide(); }
+    }
+
+    function sdNav(drive) {
+        sdCurrentDrive = drive;
+        document.querySelectorAll('#save-dialog .nav-item').forEach(i => i.classList.remove('active'));
+        const content = document.getElementById('sd-content');
+        if(drive) document.getElementById('sd-nav-' + drive.toLowerCase())?.classList.add('active');
+
+        if(drive === 'E') content.innerHTML = `<p style="color:#666; margin-top:50px; text-align:center;">This folder is empty.</p>`;
+        else if (drive === 'D') content.innerHTML = `<p style="color:#d84315; margin-top:50px; text-align:center;"><b>Error:</b> Cannot save key to the drive being encrypted.</p>`;
+        else content.innerHTML = `<p style="color:#666; margin-top:50px; text-align:center;">Select a drive to save the key.</p>`;
+    }
+
+    function executeSaveKey() {
+        if(sdCurrentDrive === 'E') {
+            closeWin('save-dialog'); keySaved = true; renderBlStep(2);
+            if(currentStep === 5) { currentStep = 6; updateGuide(); }
+        } else {
+            alert("Please save the key to Backup (E:).");
+        }
+    }
+
+    function simulateEncryption() {
+        let prog = 0;
+        const bar = document.getElementById('bl-prog-bar');
+        const text = document.getElementById('bl-prog-text');
+        
+        let inv = setInterval(() => {
+            prog += 10;
+            bar.style.width = prog + '%'; text.innerText = prog + '% Completed';
+            
+            if(prog >= 100) {
+                clearInterval(inv);
+                document.getElementById('bl-content').innerHTML = `
+                    <div style="text-align:center; margin-top:30px;">
+                        <div style="font-size:40px; color:#06b025;">✅</div>
+                        <h2 style="color:black; font-weight:normal; font-size:20px;">Encryption of D: is complete.</h2>
+                    </div>`;
+                const btnCancel = document.getElementById('bl-btn-cancel');
+                btnCancel.innerText = "Close"; btnCancel.disabled = false;
+                
+                blState = 'unlocked';
+                navTo('ThisPC'); 
+                if(currentStep === 9) { currentStep = 10; updateGuide(); }
+            }
+        }, 200);
+    }
+
+    // Password Unlock Logic
+    function executeUnlock() {
+        const pass = document.getElementById('unlock-pass').value;
+        const err = document.getElementById('unlock-err');
+        
+        if (pass === '123') {
+            blState = 'unlocked';
+            err.style.display = 'none';
+            closeWin('bl-unlock-win');
+            navTo('ThisPC'); 
+            
+            // Fix: Securely step forward if they successfully unlocked
+            if(currentStep === 13 || currentStep === 14) { 
+                currentStep = 15; updateGuide(); 
+            }
+        } else {
+            err.style.display = 'block';
+        }
+    }
+
+    // Control Panel Logic (FULL OPTIONS)
+    function openControlPanel() {
+        hideContextAndUserMenu();
+        updateCpView();
+        document.getElementById('cp-win').classList.add('show');
+        if(currentStep === 15) { currentStep = 16; updateGuide(); }
+    }
+
+    function updateCpView() {
+        const statusD = document.getElementById('cp-status-d');
+        const badgeD = document.getElementById('cp-badge-d');
+        const actionsD = document.getElementById('cp-actions-d');
+
+        if(blState === 'unlocked' || blState === 'locked') {
+            statusD.innerHTML = blState === 'locked' ? "BitLocker on (Locked)" : "BitLocker on";
+            badgeD.innerText = blState === 'locked' ? "🔒" : "🔓";
+            
+            if (blState === 'locked') {
+                actionsD.innerHTML = `<a onclick="dblClickDrive('D')">Unlock drive</a>`;
+            } else {
+                actionsD.innerHTML = `
+                    <a onclick="alert('Simulation: Key is already backed up.')">Back up your recovery key</a>
+                    <a onclick="alert('Simulation: Change password option.')">Change password</a>
+                    <a onclick="alert('Simulation: You must add a new unlock method before removing password.')">Remove password</a>
+                    <a class="da-disabled">Add smart card</a>
+                    <a onclick="alert('Simulation: Auto-unlock enabled.')">Turn on auto-unlock</a>
+                    <a onclick="confirmTurnOff()" style="font-weight:bold;">Turn off BitLocker</a>
+                `;
+            }
+        } else {
+            statusD.innerHTML = "BitLocker off"; badgeD.innerText = "";
+            actionsD.innerHTML = `<a onclick="openBitlockerWizard()">Turn on BitLocker</a>`;
+        }
+    }
+
+    function confirmTurnOff() {
+        document.getElementById('confirm-off-win').classList.add('show');
+        if(currentStep === 16) { currentStep = 17; updateGuide(); }
+    }
+
+    function executeTurnOff() {
+        closeWin('confirm-off-win');
+        document.getElementById('cp-status-d').innerHTML = "<span style='color:#d84315;'>Decrypting...</span>";
+        setTimeout(() => {
+            blState = 'off';
+            updateCpView();
+            navTo('ThisPC');
+            if(currentStep === 17) { currentStep = 18; updateGuide(); }
+        }, 1500);
+    }
+
+    // Initialize
+    updateGuide();
+</script>
+</body>
+</html>
