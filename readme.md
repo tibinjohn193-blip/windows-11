@@ -28,3 +28,5 @@ Interactive, browser-based simulations of common Windows 11 Pro setup and admini
 
 [🛠️LAB 12 Windows 11 BitLocker Encryption & Password Unlock Lab](lab12.md)
 
+[🛠️LAB 13 Recovering a Locked BitLocker Drive in Windows 11](lab13.md)
+
