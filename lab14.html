@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Windows 11 Firewall Lab</title>
+<style>
+    :root {
+        --win-bg: url('https://images.unsplash.com/photo-1617471346061-5d329ab9c574?q=80&w=1920&auto=format&fit=crop');
+        --taskbar-bg: rgba(20, 20, 20, 0.85);
+        --accent: #0067C0;
+    }
+
+    body, html {
+        margin: 0; padding: 0; width: 100%; height: 100%;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        overflow: hidden; background-color: #000; user-select: none;
+    }
+
+    #desktop {
+        width: 100%; height: 100%; background: var(--win-bg) no-repeat center center fixed;
+        background-size: cover; position: relative;
+    }
+
+    /* Instruction Panel */
+    #instruction-panel {
+        position: absolute; top: 20px; right: 20px; width: 350px;
+        background: rgba(255, 255, 255, 0.95); border: 3px solid var(--accent);
+        border-radius: 8px; padding: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+        z-index: 10000; color: #1B1B1B;
+    }
+    #instruction-panel h3 { margin: 0 0 10px 0; font-size: 15px; color: var(--accent); }
+    #instruction-text { margin: 0; font-size: 13.5px; line-height: 1.6; }
+    #instruction-text code { background: #e0e0e0; padding: 2px 5px; border-radius: 4px; font-weight: bold; color: #d84315; }
+
+    /* Taskbar */
+    .taskbar {
+        position: absolute; bottom: 0; left: 0; right: 0; height: 50px;
+        background: var(--taskbar-bg); backdrop-filter: blur(20px);
+        display: flex; align-items: center; justify-content: center; gap: 15px; z-index: 8000;
+    }
+    .tb-icon {
+        width: 36px; height: 36px; border-radius: 4px; display: flex;
+        align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; font-size: 20px; color: white;
+    }
+    .tb-icon:hover { background: rgba(255, 255, 255, 0.1); }
+
+    /* Desktop Icons */
+    .desktop-icons { position: absolute; top: 20px; left: 20px; display: flex; flex-direction: column; gap: 15px; }
+    .d-icon { display: flex; flex-direction: column; align-items: center; cursor: pointer; width: 70px; padding: 5px; border-radius: 4px; }
+    .d-icon:hover { background: rgba(255,255,255,0.1); }
+    .d-icon .i-img { font-size: 32px; margin-bottom: 5px; }
+    .d-icon .i-text { color: white; font-size: 12px; text-align: center; text-shadow: 0 1px 2px black; }
+
+    /* Start Menu */
+    #start-menu {
+        position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%);
+        width: 600px; height: 500px; background: rgba(243, 243, 243, 0.95);
+        backdrop-filter: blur(20px); border-radius: 10px; box-shadow: 0 5px 30px rgba(0,0,0,0.4);
+        display: none; flex-direction: column; padding: 30px; z-index: 7500; border: 1px solid #ccc;
+    }
+    #start-menu.show { display: flex; }
+    .sm-search-input { width: 100%; padding: 10px 15px; border-radius: 20px; border: 1px solid #ccc; font-size: 14px; margin-bottom: 20px; outline: none; background: #fff;}
+    
+    #sm-search-view { display: none; flex-grow: 1; }
+    .search-res-item { display: flex; align-items: center; gap: 15px; padding: 10px; cursor: pointer; border-radius: 5px; background: rgba(0,0,0,0.05); }
+    .search-res-item:hover { background: rgba(0,0,0,0.1); }
+    .search-res-item .icon { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; }
+
+    /* Windows Base */
+    .window {
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        background: #fff; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        display: none; flex-direction: column; overflow: hidden; border: 1px solid #ccc; z-index: 5000;
+    }
+    .window.show { display: flex; }
+    .win-header {
+        height: 32px; background: #f3f3f3; display: flex; align-items: center; justify-content: space-between;
+        padding: 0 10px; font-size: 12px; border-bottom: 1px solid #e1e1e1; flex-shrink: 0;
+    }
+    .win-title { display: flex; align-items: center; gap: 8px; }
+    .win-controls span { padding: 5px 10px; cursor: pointer; }
+    .win-controls span:hover { background: #e81123; color: white; }
+    .win-footer { background: #f0f0f0; padding: 15px; text-align: right; border-top: 1px solid #ddd; flex-shrink: 0; }
+    .btn { padding: 6px 20px; border: 1px solid #ccc; background: #fff; border-radius: 4px; cursor: pointer; margin-left: 10px; font-family: inherit;}
+    .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
+    .btn:disabled { color: #999; cursor: not-allowed; background: #f9f9f9;}
+
+    /* Run Window */
+    #run-win { width: 420px; z-index: 5005; }
+    .run-content-wrapper { padding: 20px; font-size: 13px; }
+
+    /* firewall.cpl Window */
+    #cpl-win { width: 850px; height: 550px; z-index: 5010; }
+    .cpl-addr-bar { background:#f5f6f7; padding:8px 10px; border-bottom:1px solid #ccc; display:flex; align-items:center; gap:8px; font-size:12px; color:#333; }
+    .cpl-layout { display:flex; flex-grow:1; height:0; }
+    .cpl-sidebar { width:220px; background:#f0f0f0; padding:20px 10px; font-size:13px; color:#003399; }
+    .cpl-nav { margin-bottom:15px; cursor:pointer; padding:5px; border-radius:3px;}
+    .cpl-nav:hover { text-decoration:underline; }
+    .cpl-content { flex-grow:1; padding:25px; font-size:13px; overflow-y:auto; background:#fff;}
+    
+    .fw-status-box { border:1px solid #ccc; margin-top:20px; }
+    .fw-status-header { padding:10px 15px; font-weight:bold; border-bottom:1px solid #ccc; display:flex; align-items:center; gap:10px; font-size:14px;}
+    .fw-status-body { padding:15px; display:flex; flex-direction:column; gap:8px; }
+
+    /* MMC Firewall Window (wf.msc) */
+    #fw-win { width: 900px; height: 550px; z-index: 5015; }
+    .fw-toolbar { display: flex; gap: 15px; padding: 5px 10px; border-bottom: 1px solid #ddd; font-size: 12px; background: #fff;}
+    .fw-body { display: flex; flex-grow: 1; height: 0; background: #fff; }
+    .fw-left { width: 220px; border-right: 1px solid #ddd; padding: 10px; overflow-y: auto; font-size: 13px; }
+    .fw-center { flex-grow: 1; border-right: 1px solid #ddd; padding: 10px; overflow-y: auto; font-size: 13px; }
+    .fw-right { width: 180px; padding: 10px; overflow-y: auto; font-size: 13px; background: #f9f9f9; }
+
+    .tree-item { padding: 4px 5px; cursor: pointer; display: flex; align-items: center; gap: 5px; border-radius:3px; }
+    .tree-item:hover { background: #e5f1fb; }
+    .tree-item.active { background: #cce8ff; }
+
+    .rule-table { width: 100%; border-collapse: collapse; }
+    .rule-table th { text-align: left; padding: 5px; border-bottom: 1px solid #ddd; font-weight: normal; color: #666; font-size: 12px; }
+    .rule-table td { padding: 5px; border-bottom: 1px solid #eee; }
+
+    .action-group { margin-bottom: 15px; }
+    .action-group-title { font-weight: bold; margin-bottom: 5px; border-bottom: 1px solid #ccc; padding-bottom: 3px; }
+    .action-item { padding: 4px 5px; cursor: pointer; display: flex; align-items: center; gap: 5px; color: #0067C0; }
+    .action-item:hover { text-decoration: underline; }
+
+    /* New Rule Wizard */
+    #wizard-win { width: 650px; height: 480px; z-index: 5020; }
+    .wiz-layout { display: flex; flex-grow: 1; height: 0; }
+    .wiz-sidebar { width: 160px; background: #0067C0; color: white; padding: 20px 10px; font-size: 13px; }
+    .wiz-step { margin-bottom: 10px; padding: 5px; opacity: 0.6; }
+    .wiz-step.active { opacity: 1; font-weight: bold; background: rgba(255,255,255,0.2); border-radius: 4px; }
+    .wiz-content { flex-grow: 1; padding: 20px; font-size: 13px; background: #fff; overflow-y: auto;}
+
+    .wiz-content h2 { margin-top: 0; font-weight: normal; color: #003399; font-size: 18px; margin-bottom: 20px; }
+    .opt-lbl { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 15px; cursor: pointer; }
+    .opt-lbl input[type="radio"] { margin-top: 3px; }
+    .opt-desc { color: #555; margin-left: 25px; margin-top: 2px; }
+
+</style>
+</head>
+<body onclick="hideStartMenu()">
+
+    <!-- INSTRUCTION PANEL -->
+    <div id="instruction-panel">
+        <h3>📋 Firewall Lab Guide</h3>
+        <p id="instruction-text"></p>
+    </div>
+
+    <!-- Desktop -->
+    <div id="desktop">
+        
+        <div class="desktop-icons">
+            <div class="d-icon" onclick="alert('Simulation: Please use the Run menu for this lab.')">
+                <div class="i-img">🛡️</div><div class="i-text">Windows Security</div>
+            </div>
+        </div>
+
+        <!-- Taskbar -->
+        <div class="taskbar">
+            <div class="tb-icon" onclick="toggleStartMenu(event)" title="Start">🪟</div>
+        </div>
+
+        <!-- Start Menu -->
+        <div id="start-menu" onclick="event.stopPropagation()">
+            <input type="text" class="sm-search-input" id="sm-search-input" placeholder="Type here to search" oninput="handleStartSearch()">
+            
+            <div id="sm-search-view">
+                <div style="font-weight: bold; margin-bottom: 15px;">Best match</div>
+                <div id="sm-search-results"></div>
+            </div>
+        </div>
+
+        <!-- Run Window -->
+        <div class="window" id="run-win">
+            <div class="win-header">
+                <div class="win-title">
+                    <span style="display:flex; align-items:center;">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="#0067C0" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zM1 3.5a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5V5H1V3.5zM1 6h14v6.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5V6zm2 2.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5z"/>
+                        </svg>
+                    </span> Run
+                </div>
+                <div class="win-controls"><span onclick="closeWin('run-win')">✖</span></div>
+            </div>
+            <div class="run-content-wrapper">
+                <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                    <div style="display:flex; align-items:center;">
+                        <svg width="36" height="36" viewBox="0 0 16 16" fill="#0067C0" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zM1 3.5a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5V5H1V3.5zM1 6h14v6.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5V6zm2 2.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5z"/>
+                        </svg>
+                    </div>
+                    <div>Type the name of a program, folder, document, or Internet resource, and Windows will open it for you.</div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <label style="font-weight: 500;">Open:</label>
+                    <input type="text" id="run-input" style="flex-grow: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px;" onkeypress="if(event.key==='Enter') executeRun()">
+                </div>
+            </div>
+            <div class="win-footer">
+                <button class="btn btn-primary" onclick="executeRun()">OK</button>
+                <button class="btn" onclick="closeWin('run-win')">Cancel</button>
+            </div>
+        </div>
+
+        <!-- firewall.cpl Window -->
+        <div class="window" id="cpl-win">
+            <div class="win-header">
+                <div class="win-title">Windows Defender Firewall</div>
+                <div class="win-controls"><span onclick="closeWin('cpl-win')">✖</span></div>
+            </div>
+            <div class="cpl-addr-bar">
+                <span style="color:#0067C0; cursor:pointer;">↑</span> 
+                <span style="color:#0067C0; cursor:pointer;">Control Panel</span> <span>></span> 
+                <span style="color:#0067C0; cursor:pointer;">System and Security</span> <span>></span> 
+                <span>Windows Defender Firewall</span>
+            </div>
+            <div class="cpl-layout">
+                <div class="cpl-sidebar">
+                    <div class="cpl-nav" onclick="alert('Simulation: Focus on turning off the firewall and advanced settings.')">Control Panel Home</div>
+                    <div class="cpl-nav" onclick="alert('Simulation: Focus on turning off the firewall and advanced settings.')">Allow an app or feature through Windows Defender Firewall</div>
+                    <div class="cpl-nav" onclick="showCplTurnOff()">Turn Windows Defender Firewall on or off</div>
+                    <div class="cpl-nav" onclick="alert('Simulation: Restore defaults not needed for this lab.')">Restore defaults</div>
+                    <div class="cpl-nav" onclick="openAdvancedFw()">Advanced settings</div>
+                </div>
+                <div class="cpl-content" id="cpl-content">
+                    <!-- Main CPL View -->
+                </div>
+            </div>
+        </div>
+
+        <!-- MMC Firewall Window (wf.msc) -->
+        <div class="window" id="fw-win">
+            <div class="win-header">
+                <div class="win-title"><span>🧱</span> Windows Defender Firewall with Advanced Security</div>
+                <div class="win-controls"><span onclick="closeWin('fw-win')">✖</span></div>
+            </div>
+            <div class="fw-toolbar">
+                <div>File</div><div>Action</div><div>View</div><div>Help</div>
+            </div>
+            <div class="fw-body">
+                <div class="fw-left">
+                    <div class="tree-item" style="font-weight:bold;">🧱 Windows Defender Firewall</div>
+                    <div class="tree-item" id="nav-inbound" onclick="showInboundRules()">📥 Inbound Rules</div>
+                    <div class="tree-item">📤 Outbound Rules</div>
+                    <div class="tree-item">🛡️ Connection Security Rules</div>
+                    <div class="tree-item">📊 Monitoring</div>
+                </div>
+                <div class="fw-center" id="fw-center">
+                    <h2 style="font-weight: normal; color: #003399; margin-top:0;">Windows Defender Firewall with Advanced Security</h2>
+                    <p>Windows Defender Firewall provides network security for Windows computers.</p>
+                    <div style="margin-top:20px; border-top:1px solid #ddd; padding-top:10px;">
+                        Click on <b>Inbound Rules</b> or <b>Outbound Rules</b> in the left pane to view or modify rules.
+                    </div>
+                </div>
+                <div class="fw-right" id="fw-right">
+                    <div class="action-group">
+                        <div class="action-group-title">Windows Defender...</div>
+                        <div class="action-item">Properties</div>
+                        <div class="action-item">Refresh</div>
+                        <div class="action-item">Help</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- New Rule Wizard -->
+        <div class="window" id="wizard-win">
+            <div class="win-header">
+                <div class="win-title">New Inbound Rule Wizard</div>
+                <div class="win-controls"><span onclick="closeWin('wizard-win')">✖</span></div>
+            </div>
+            <div class="wiz-layout">
+                <div class="wiz-sidebar">
+                    <div class="wiz-step active" id="ws-1">Rule Type</div>
+                    <div class="wiz-step" id="ws-2">Protocol and Ports</div>
+                    <div class="wiz-step" id="ws-3">Action</div>
+                    <div class="wiz-step" id="ws-4">Profile</div>
+                    <div class="wiz-step" id="ws-5">Name</div>
+                </div>
+                <div class="wiz-content" id="wiz-content">
+                    <!-- Dynamic Steps -->
+                </div>
+            </div>
+            <div class="win-footer">
+                <button class="btn" id="wiz-btn-back" onclick="wizBack()" disabled>&lt; Back</button>
+                <button class="btn btn-primary" id="wiz-btn-next" onclick="wizNext()">Next &gt;</button>
+                <button class="btn" id="wiz-btn-cancel" onclick="closeWin('wizard-win')">Cancel</button>
+            </div>
+        </div>
+
+    </div>
+
+<script>
+    let currentStep = 1;
+    let fwState = 'on'; // 'on' or 'off'
+    let wizStep = 1;
+    let ruleName = "";
+
+    const instructions = {
+        1: "<b>Step 1:</b> Click <b>Start (🪟)</b>, search for <code>run</code>, and open the <b>Run</b> app.",
+        2: "<b>Step 2:</b> We will open the Control Panel Firewall. Type <code>firewall.cpl</code> and click <b>OK</b>.",
+        3: "<b>Step 3:</b> Notice the Firewall is ON for both networks (Green shield). On the left, click <b>Turn Windows Defender Firewall on or off</b>.",
+        4: "<b>Step 4:</b> Under BOTH <b>Private</b> and <b>Public</b> network settings, select <b>Turn off Windows Defender Firewall</b>. Then click <b>OK</b>.",
+        5: "<b>Step 5:</b> The firewall is now fully OFF (Red ❌). Now let's block an incoming protocol using Advanced tools. Click <b>Advanced settings</b>.",
+        6: "<b>Step 6:</b> The Advanced Security window opens. Click <b>📥 Inbound Rules</b> on the left.",
+        7: "<b>Step 7:</b> In the Actions pane on the right, click <b>New Rule...</b>",
+        8: "<b>Step 8:</b> Select <b>Port</b> to control connections for a specific incoming TCP/UDP protocol port, then click <b>Next</b>.",
+        9: "<b>Step 9:</b> Ensure the protocol <b>TCP</b> is selected. Choose <b>Specific local ports</b>, type <code>8080</code>, and click <b>Next</b>.",
+        10: "<b>Step 10:</b> Choose <b>Block the connection</b>, then click <b>Next</b>.",
+        11: "<b>Step 11:</b> Keep all network profiles checked and click <b>Next</b>.",
+        12: "<b>Step 12:</b> Type <code>Block Port 8080</code> as the Name and click <b>Finish</b>.",
+        13: "✅ <b>Lab Complete!</b> You successfully turned off the firewall for both Private and Public networks, and blocked an incoming TCP protocol port."
+    };
+
+    function updateGuide() {
+        document.getElementById('instruction-text').innerHTML = instructions[currentStep];
+    }
+
+    // Start Menu & Search
+    function toggleStartMenu(e) {
+        if(e) e.stopPropagation();
+        const menu = document.getElementById('start-menu');
+        menu.classList.toggle('show');
+        if(menu.classList.contains('show')) {
+            document.getElementById('sm-search-input').value = '';
+            document.getElementById('sm-search-view').style.display = 'none';
+            document.getElementById('sm-search-input').focus();
+        }
+    }
+
+    function hideStartMenu() {
+        document.getElementById('start-menu').classList.remove('show');
+    }
+
+    function handleStartSearch() {
+        const val = document.getElementById('sm-search-input').value.toLowerCase();
+        const searchView = document.getElementById('sm-search-view');
+        const results = document.getElementById('sm-search-results');
+
+        if(val.length > 0) {
+            searchView.style.display = 'block';
+            if (val.includes('run')) {
+                results.innerHTML = `
+                    <div class="search-res-item" onclick="openRun()">
+                        <div class="icon">
+                            <svg width="24" height="24" viewBox="0 0 16 16" fill="#0067C0" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zM1 3.5a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5V5H1V3.5zM1 6h14v6.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5V6zm2 2.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div style="font-weight:bold; font-size:14px;">Run</div>
+                            <div style="font-size:12px; color:#666;">App</div>
+                        </div>
+                    </div>`;
+                if(currentStep === 1) { currentStep = 2; updateGuide(); }
+            } else {
+                results.innerHTML = `<div style="padding: 10px; color:#666;">No results found</div>`;
+            }
+        } else {
+            searchView.style.display = 'none';
+        }
+    }
+
+    function openRun() {
+        hideStartMenu();
+        document.getElementById('run-win').classList.add('show');
+        document.getElementById('run-input').focus();
+    }
+
+    function closeWin(id) { 
+        document.getElementById(id).classList.remove('show'); 
+    }
+
+    function executeRun() {
+        const val = document.getElementById('run-input').value.trim().toLowerCase();
+        if(val === 'firewall.cpl') {
+            closeWin('run-win');
+            document.getElementById('run-input').value = '';
+            openCplMain();
+            if(currentStep === 2) { currentStep = 3; updateGuide(); }
+        } else {
+            alert("Windows cannot find '" + val + "'. Please type firewall.cpl.");
+        }
+    }
+
+    // firewall.cpl Logic
+    function openCplMain() {
+        document.getElementById('cpl-win').classList.add('show');
+        renderCplMain();
+    }
+
+    function renderCplMain() {
+        const content = document.getElementById('cpl-content');
+        let shieldBg = fwState === 'on' ? '#e5f1fb' : '#fae6e6';
+        let shieldIcon = fwState === 'on' ? '🛡️' : '❌';
+        let shieldText = fwState === 'on' ? 'On' : 'Off';
+        let borderColor = fwState === 'on' ? '#ccc' : '#d84315';
+
+        content.innerHTML = `
+            <h2 style="font-size:18px; font-weight:normal; color:#003399; margin-top:0;">Help protect your PC with Windows Defender Firewall</h2>
+            <p>Windows Defender Firewall can help prevent hackers or malicious software from gaining access to your PC through the Internet or a network.</p>
+            
+            <div class="fw-status-box" style="border-color:${borderColor};">
+                <div class="fw-status-header" style="background:${shieldBg}; border-color:${borderColor};">
+                    <span style="font-size:18px;">${shieldIcon}</span> Private networks
+                </div>
+                <div class="fw-status-body">
+                    <div>Windows Defender Firewall state: <b>${shieldText}</b></div>
+                    <div>Incoming connections: Block all connections to apps that are not on the list of allowed apps</div>
+                    <div>Active private networks: Network</div>
+                    <div>Notification state: Notify me when Windows Defender Firewall blocks a new app</div>
+                </div>
+            </div>
+
+            <div class="fw-status-box" style="border-color:${borderColor};">
+                <div class="fw-status-header" style="background:${shieldBg}; border-color:${borderColor};">
+                    <span style="font-size:18px;">${shieldIcon}</span> Guest or public networks
+                </div>
+                <div class="fw-status-body">
+                    <div>Windows Defender Firewall state: <b>${shieldText}</b></div>
+                    <div>Incoming connections: Block all connections to apps that are not on the list of allowed apps</div>
+                    <div>Notification state: Notify me when Windows Defender Firewall blocks a new app</div>
+                </div>
+            </div>
+        `;
+    }
+
+    function showCplTurnOff() {
+        const content = document.getElementById('cpl-content');
+        content.innerHTML = `
+            <h2 style="font-size:18px; font-weight:normal; color:#003399; margin-top:0;">Customize settings for each type of network</h2>
+            <p>You can modify the firewall settings for each type of network location that you use.</p>
+            
+            <div style="margin-top:20px;">
+                <b style="font-size:14px;">Private network settings</b>
+                <div style="margin-top:10px; margin-left:20px;">
+                    <label style="display:block; margin-bottom:8px; cursor:pointer;"><input type="radio" name="fw_priv" id="fw_priv_on" ${fwState==='on'?'checked':''}> Turn on Windows Defender Firewall</label>
+                    <label style="display:block; margin-bottom:8px; cursor:pointer;"><input type="radio" name="fw_priv" id="fw_priv_off" ${fwState==='off'?'checked':''}> Turn off Windows Defender Firewall (not recommended)</label>
+                </div>
+            </div>
+
+            <div style="margin-top:20px;">
+                <b style="font-size:14px;">Public network settings</b>
+                <div style="margin-top:10px; margin-left:20px;">
+                    <label style="display:block; margin-bottom:8px; cursor:pointer;"><input type="radio" name="fw_pub" id="fw_pub_on" ${fwState==='on'?'checked':''}> Turn on Windows Defender Firewall</label>
+                    <label style="display:block; margin-bottom:8px; cursor:pointer;"><input type="radio" name="fw_pub" id="fw_pub_off" ${fwState==='off'?'checked':''}> Turn off Windows Defender Firewall (not recommended)</label>
+                </div>
+            </div>
+
+            <div style="margin-top:30px; border-top:1px solid #eee; padding-top:15px; text-align:right;">
+                <button class="btn btn-primary" onclick="saveCplFw()">OK</button>
+                <button class="btn" onclick="renderCplMain()">Cancel</button>
+            </div>
+        `;
+        if(currentStep === 3) { currentStep = 4; updateGuide(); }
+    }
+
+    function saveCplFw() {
+        const privOff = document.getElementById('fw_priv_off').checked;
+        const pubOff = document.getElementById('fw_pub_off').checked;
+
+        if(privOff && pubOff) {
+            fwState = 'off';
+            if(currentStep === 4) { currentStep = 5; updateGuide(); }
+            renderCplMain();
+        } else if (privOff || pubOff) {
+            alert("For this lab, please turn off BOTH Private and Public firewalls.");
+        } else {
+            fwState = 'on';
+            renderCplMain();
+        }
+    }
+
+    // wf.msc Logic
+    function openAdvancedFw() {
+        if(currentStep === 5) { currentStep = 6; updateGuide(); }
+        document.getElementById('fw-win').classList.add('show');
+        document.querySelectorAll('.tree-item').forEach(i => i.classList.remove('active'));
+        document.getElementById('fw-center').innerHTML = `
+            <h2 style="font-weight: normal; color: #003399; margin-top:0;">Windows Defender Firewall with Advanced Security</h2>
+            <p>Windows Defender Firewall provides network security for Windows computers.</p>
+            <div style="margin-top:20px; border-top:1px solid #ddd; padding-top:10px;">
+                Click on <b>Inbound Rules</b> or <b>Outbound Rules</b> in the left pane to view or modify rules.
+            </div>`;
+    }
+
+    function showInboundRules() {
+        document.querySelectorAll('.tree-item').forEach(i => i.classList.remove('active'));
+        document.getElementById('nav-inbound').classList.add('active');
+        
+        const center = document.getElementById('fw-center');
+        center.innerHTML = `
+            <table class="rule-table" id="rule-table">
+                <thead><tr><th>Name</th><th>Group</th><th>Profile</th><th>Enabled</th><th>Action</th></tr></thead>
+                <tbody id="rule-tbody">
+                    <tr><td><span style="color:#06b025;">✔️</span> Core Networking - IPv4</td><td>Core Networking</td><td>All</td><td>Yes</td><td>Allow</td></tr>
+                    <tr><td><span style="color:#06b025;">✔️</span> File and Printer Sharing</td><td>File and Printer Sharing</td><td>Private</td><td>Yes</td><td>Allow</td></tr>
+                </tbody>
+            </table>
+        `;
+
+        const right = document.getElementById('fw-right');
+        right.innerHTML = `
+            <div class="action-group">
+                <div class="action-group-title">Inbound Rules</div>
+                <div class="action-item" onclick="openWizard()">➕ New Rule...</div>
+                <div class="action-item">🔄 Refresh</div>
+            </div>
+        `;
+        if(currentStep === 6) { currentStep = 7; updateGuide(); }
+    }
+
+    // New Rule Wizard Logic
+    function openWizard() {
+        document.getElementById('wizard-win').classList.add('show');
+        renderWizStep(1);
+        if(currentStep === 7) { currentStep = 8; updateGuide(); }
+    }
+
+    function renderWizStep(step) {
+        wizStep = step;
+        document.querySelectorAll('.wiz-step').forEach(el => el.classList.remove('active'));
+        document.getElementById('ws-' + step).classList.add('active');
+
+        const content = document.getElementById('wiz-content');
+        const btnNext = document.getElementById('wiz-btn-next');
+        const btnBack = document.getElementById('wiz-btn-back');
+
+        btnBack.disabled = (step === 1);
+
+        if(step === 1) {
+            content.innerHTML = `
+                <h2>What type of rule would you like to create?</h2>
+                <label class="opt-lbl"><input type="radio" name="r_type"><div><strong>Program</strong><div class="opt-desc">Rule that controls connections for a program.</div></div></label>
+                <label class="opt-lbl" onclick="if(currentStep === 8) { document.getElementById('wiz-btn-next').disabled = false; }">
+                    <input type="radio" name="r_type" id="rt-port"><div><strong>Port</strong><div class="opt-desc">Rule that controls incoming connections for a TCP or UDP protocol port.</div></div>
+                </label>
+                <label class="opt-lbl"><input type="radio" name="r_type"><div><strong>Predefined</strong></div></label>
+                <label class="opt-lbl"><input type="radio" name="r_type"><div><strong>Custom</strong></div></label>
+            `;
+            btnNext.innerText = "Next >";
+            btnNext.disabled = (currentStep === 8); 
+        } 
+        else if (step === 2) {
+            content.innerHTML = `
+                <h2>Does this rule apply to TCP or UDP? (Protocol)</h2>
+                <label style="margin-right:15px;"><input type="radio" name="p_type" checked> TCP</label>
+                <label><input type="radio" name="p_type"> UDP</label>
+                <h2 style="margin-top:25px;">Does this rule apply to all local ports or specific local ports?</h2>
+                <label style="display:block; margin-bottom:10px;"><input type="radio" name="p_ports"> All local ports</label>
+                <label style="display:flex; align-items:center; gap:10px;">
+                    <input type="radio" name="p_ports" checked> Specific local ports:
+                    <input type="text" id="wiz-port-in" style="padding:4px; width:100px;" placeholder="e.g. 8080" oninput="checkPortInput()">
+                </label>
+            `;
+            btnNext.innerText = "Next >";
+            btnNext.disabled = true;
+        }
+        else if (step === 3) {
+            content.innerHTML = `
+                <h2>What action should be taken when an incoming connection matches the specified conditions?</h2>
+                <label class="opt-lbl"><input type="radio" name="r_action"><div><strong>Allow the connection</strong></div></label>
+                <label class="opt-lbl"><input type="radio" name="r_action"><div><strong>Allow the connection if it is secure</strong></div></label>
+                <label class="opt-lbl" onclick="document.getElementById('wiz-btn-next').disabled = false;">
+                    <input type="radio" name="r_action" id="ra-block"><div><strong>Block the connection</strong><div class="opt-desc">Block incoming protocol connections that match.</div></div>
+                </label>
+            `;
+            btnNext.innerText = "Next >";
+            btnNext.disabled = (currentStep === 10); 
+        }
+        else if (step === 4) {
+            content.innerHTML = `
+                <h2>When does this rule apply?</h2>
+                <label style="display:block; margin-bottom:10px;"><input type="checkbox" checked> <strong>Domain</strong></label>
+                <label style="display:block; margin-bottom:10px;"><input type="checkbox" checked> <strong>Private</strong></label>
+                <label style="display:block; margin-bottom:10px;"><input type="checkbox" checked> <strong>Public</strong></label>
+            `;
+            btnNext.innerText = "Next >";
+            btnNext.disabled = false;
+        }
+        else if (step === 5) {
+            content.innerHTML = `
+                <h2>Please specify the name and description of this rule.</h2>
+                <label style="display:block; margin-bottom:5px;">Name:</label>
+                <input type="text" id="wiz-name-in" style="width:100%; padding:6px; box-sizing:border-box; margin-bottom:15px;" oninput="checkNameInput()">
+                <label style="display:block; margin-bottom:5px;">Description (optional):</label>
+                <textarea style="width:100%; height:80px; padding:6px; box-sizing:border-box;"></textarea>
+            `;
+            btnNext.innerText = "Finish";
+            btnNext.disabled = true;
+        }
+    }
+
+    function checkPortInput() {
+        const val = document.getElementById('wiz-port-in').value.trim();
+        if(val === '8080') {
+            document.getElementById('wiz-btn-next').disabled = false;
+        } else {
+            document.getElementById('wiz-btn-next').disabled = true;
+        }
+    }
+
+    function checkNameInput() {
+        const val = document.getElementById('wiz-name-in').value.trim();
+        if(val.toLowerCase() === 'block port 8080') {
+            document.getElementById('wiz-btn-next').disabled = false;
+            ruleName = val;
+        } else {
+            document.getElementById('wiz-btn-next').disabled = true;
+        }
+    }
+
+    function wizNext() {
+        if(wizStep === 1) {
+            if(document.getElementById('rt-port').checked) {
+                renderWizStep(2);
+                if(currentStep === 8) { currentStep = 9; updateGuide(); }
+            } else { alert("For this lab, select 'Port'."); }
+        } 
+        else if (wizStep === 2) {
+            renderWizStep(3);
+            if(currentStep === 9) { currentStep = 10; updateGuide(); }
+        }
+        else if (wizStep === 3) {
+            if(document.getElementById('ra-block').checked) {
+                renderWizStep(4);
+                if(currentStep === 10) { currentStep = 11; updateGuide(); }
+            } else { alert("For this lab, select 'Block the connection'."); }
+        }
+        else if (wizStep === 4) {
+            renderWizStep(5);
+            if(currentStep === 11) { currentStep = 12; updateGuide(); }
+        }
+        else if (wizStep === 5) {
+            closeWin('wizard-win');
+            const tbody = document.getElementById('rule-tbody');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td><span style="color:#d84315; font-size:16px; margin-right:5px;">🚫</span> ${ruleName}</td><td></td><td>All</td><td>Yes</td><td>Block</td>`;
+            tbody.insertBefore(tr, tbody.firstChild);
+            
+            if(currentStep === 12) { currentStep = 13; updateGuide(); }
+        }
+    }
+
+    function wizBack() {
+        if(wizStep > 1) renderWizStep(wizStep - 1);
+    }
+
+    // Initialize
+    updateGuide();
+</script>
+</body>
+</html>
