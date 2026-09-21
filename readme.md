@@ -15,20 +15,20 @@ Each lab is a single, self-contained HTML file with no build steps or external d
 
 Click on any lab below to start the interactive simulation:
 
-* **[🛠️ LAB 1 — Bootable USB with Rufus](lab1.html)**
-* **[🛠️ LAB 2 — Windows 11 Pro Setup (Offline Account)](lab2.html)**
-* **[🛠️ LAB 3 — Creating System Restore Point](lab3.html)**
-* **[🛠️ LAB 4 — Restore Windows 11 OS using Restore Point](lab4.html)**
-* **[🛠️ LAB 5 — Windows 11 Disk Management](lab5.html)**
-* **[🛠️ LAB 6 — IP Configuration & ICMP Inspection (Ping)](lab6.html)**
-* **[🛠️ LAB 7 — Windows 11 Remote Desktop Connection (RDP)](lab7.html)**
-* **[🛠️ LAB 8 — Windows 11 Local User Management (lusrmgr.msc)](lab8.html)**
-* **[🛠️ LAB 9 — Windows 11 Local User Management (using CMD)](lab9.html)**
-* **[🛠️ LAB 10 — Windows 11 Network Folder Sharing & Permissions](lab10.html)**
-* **[🛠️ LAB 11 — Windows 11 Malicious Software Removal Tool (MRT) Scan Lab](lab11.html)**
-* **[🛠️ LAB 12 — Windows 11 BitLocker Encryption & Password Unlock Lab](lab12.html)**
-* **[🛠️ LAB 13 — Recovering a Locked BitLocker Drive in Windows 11](lab13.html)**
-* **[🛠️ LAB 14 — Configuring Windows Defender Firewall & Inbound Rules](lab14.html)**
+* **[🛠️ LAB 1 — Bootable USB with Rufus](lab1.md)**
+* **[🛠️ LAB 2 — Windows 11 Pro Setup (Offline Account)](lab2.md)**
+* **[🛠️ LAB 3 — Creating System Restore Point](lab3.md)**
+* **[🛠️ LAB 4 — Restore Windows 11 OS using Restore Point](lab4.md)**
+* **[🛠️ LAB 5 — Windows 11 Disk Management](lab5.md)**
+* **[🛠️ LAB 6 — IP Configuration & ICMP Inspection (Ping)](lab6.md)**
+* **[🛠️ LAB 7 — Windows 11 Remote Desktop Connection (RDP)](lab7.md)**
+* **[🛠️ LAB 8 — Windows 11 Local User Management (lusrmgr.msc)](lab8.md)**
+* **[🛠️ LAB 9 — Windows 11 Local User Management (using CMD)](lab9.md)**
+* **[🛠️ LAB 10 — Windows 11 Network Folder Sharing & Permissions](lab10.md)**
+* **[🛠️ LAB 11 — Windows 11 Malicious Software Removal Tool (MRT) Scan Lab](lab11.md)**
+* **[🛠️ LAB 12 — Windows 11 BitLocker Encryption & Password Unlock Lab](lab12.md)**
+* **[🛠️ LAB 13 — Recovering a Locked BitLocker Drive in Windows 11](lab13.md)**
+* **[🛠️ LAB 14 — Configuring Windows Defender Firewall & Inbound Rules](lab14.md)**
 
 ### 🏆 Capstone Assessment
 * **[🎓 Windows 11 Master Exam Simulator](exam.html)** — *A final challenge combining Disk Management, IP Configuration, User Creation, Sharing, Firewall, and BitLocker into a single lab with no step-by-step guidance!*
