@@ -3,13 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Windows 11 Local User Management Lab</title>
+<title>Lab 8: Windows 11 Local User Management (lusrmgr.msc)</title>
 <style>
     :root {
         --win-bg: url('https://images.unsplash.com/photo-1617471346061-5d329ab9c574?q=80&w=1920&auto=format&fit=crop');
         --taskbar-bg: rgba(20, 20, 20, 0.85);
         --accent: #0067C0;
-        --win-color: #ffffff;
     }
 
     body, html {
@@ -23,15 +22,16 @@
         background-size: cover; position: relative;
     }
 
-    /* Instruction Panel */
-    #instruction-panel {
-        position: absolute; top: 20px; right: 20px; width: 320px;
-        background: rgba(255, 255, 255, 0.95); border: 3px solid var(--accent);
+    /* Instruction Panel (Highest Z-index to show over Login Screen) */
+    #exam-panel {
+        position: absolute; top: 20px; right: 20px; width: 340px;
+        background: rgba(255, 255, 255, 0.95); border: 2px solid #0067C0;
         border-radius: 8px; padding: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.6);
-        z-index: 10000; color: #1B1B1B;
+        z-index: 15000; color: #1B1B1B;
     }
-    #instruction-panel h3 { margin: 0 0 10px 0; font-size: 15px; color: var(--accent); }
-    #instruction-text { margin: 0; font-size: 13px; line-height: 1.5; }
+    #exam-header { cursor: move; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 15px; }
+    #instruction-text { font-size: 13.5px; line-height: 1.6; margin: 0; }
+    #instruction-text code { background: #e0e0e0; padding: 2px 5px; border-radius: 4px; font-weight: bold; color: #d84315; }
 
     /* Taskbar */
     .taskbar {
@@ -40,55 +40,40 @@
         display: flex; align-items: center; justify-content: center; gap: 15px; z-index: 8000;
     }
     .tb-icon {
-        width: 36px; height: 36px; border-radius: 4px; display: flex;
-        align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; font-size: 20px; color: white;
+        width: 36px; height: 36px; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; font-size: 20px; color: white;
     }
     .tb-icon:hover { background: rgba(255, 255, 255, 0.1); }
 
     /* Start Menu */
     #start-menu {
         position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%);
-        width: 600px; height: 520px; background: rgba(243, 243, 243, 0.95);
-        backdrop-filter: blur(20px); border-radius: 10px; box-shadow: 0 5px 30px rgba(0,0,0,0.4);
-        display: none; flex-direction: column; padding: 30px 30px 15px 30px; z-index: 7500; border: 1px solid #ccc;
+        width: 500px; height: 400px; background: rgba(243, 243, 243, 0.95);
+        backdrop-filter: blur(20px); border-radius: 10px; display: none; flex-direction: column; padding: 20px; z-index: 7500; border: 1px solid #ccc;
     }
     #start-menu.show { display: flex; }
+    .sm-search-input { width: 100%; padding: 10px 15px; border-radius: 20px; border: 1px solid #ccc; font-size: 14px; margin-bottom: 20px; outline: none; box-sizing: border-box; background:#fff;}
+    .search-res-item { display: flex; align-items: center; gap: 15px; padding: 10px; cursor: pointer; border-radius: 5px; background: rgba(0,0,0,0.03); margin-bottom: 5px;}
+    .search-res-item:hover { background: rgba(0,0,0,0.08); }
+    .svg-icon { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; }
     
-    .sm-search-input { 
-        width: 100%; padding: 10px 15px; border-radius: 20px; border: 1px solid #ccc; 
-        font-size: 14px; margin-bottom: 20px; box-sizing: border-box; outline: none; background: #fff;
+    .sm-profile-hover:hover { background: rgba(0,0,0,0.05); }
+
+    /* Login / Lock Screen */
+    #login-screen {
+        position: absolute; top:0; left:0; width:100%; height:100%;
+        background: var(--win-bg) no-repeat center center fixed; background-size: cover;
+        z-index: 12000; color: white; display: none; flex-direction: column;
     }
-    .sm-search-input:focus { border-color: var(--accent); }
-
-    .sm-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 15px; }
-    .sm-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; padding: 10px 5px; border-radius: 5px; text-align: center; }
-    .sm-item:hover { background: rgba(0,0,0,0.05); }
-    .sm-item .icon { font-size: 32px; margin-bottom: 8px; display: flex; align-items: center; justify-content: center;}
-    .sm-item .text { font-size: 11px; }
-
-    /* Search Results Style */
-    .search-res-item { display: flex; align-items: center; gap: 15px; padding: 10px; cursor: pointer; border-radius: 5px; }
-    .search-res-item:hover { background: rgba(0,0,0,0.05); }
-    .search-res-item .icon { font-size: 24px; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; }
-
-    /* Start Menu Footer (User Profile & Power) */
-    .sm-footer {
-        border-top: 1px solid #ccc; padding-top: 15px; display: flex; justify-content: space-between; align-items: center;
+    #login-screen::before {
+        content:''; position:absolute; top:0; left:0; width:100%; height:100%;
+        background: rgba(0,0,0,0.4); backdrop-filter: blur(15px); z-index: 12001;
     }
-    .sm-user { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 5px 10px; border-radius: 5px; font-size: 13px; font-weight: 500; }
-    .sm-user:hover { background: rgba(0,0,0,0.05); }
-    .user-avatar-small { width: 30px; height: 30px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; color: white;}
-    .sm-power { font-size: 20px; padding: 5px 10px; cursor: pointer; border-radius: 5px; }
-    .sm-power:hover { background: rgba(0,0,0,0.05); }
-
-    /* Start Menu User Pop-up (Sign out / Switch User) */
-    .sm-user-menu {
-        position: absolute; bottom: 70px; left: 30px; background: #fff;
-        border: 1px solid #ccc; border-radius: 5px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        display: none; flex-direction: column; padding: 5px 0; z-index: 7600; min-width: 150px;
-    }
-    .sm-user-menu div { padding: 10px 15px; cursor: pointer; font-size: 13px; }
-    .sm-user-menu div:hover { background: #f0f0f0; }
+    #lock-view { position:relative; z-index:12002; width:100%; height:100%; cursor:pointer; }
+    #login-view { position:relative; z-index:12002; width:100%; height:100%; display:none; }
+    
+    .login-user-sel { padding: 10px 15px; cursor: pointer; border-radius: 5px; display:flex; align-items:center; gap:10px; background: rgba(255,255,255,0.1); width: 180px;}
+    .login-user-sel:hover { background: rgba(255,255,255,0.2); }
+    .login-user-sel.active { background: rgba(255,255,255,0.3); border-left: 3px solid #0067C0; }
 
     /* Windows Base */
     .window {
@@ -99,658 +84,608 @@
     .window.show { display: flex; }
     .win-header {
         height: 32px; background: #f3f3f3; display: flex; align-items: center; justify-content: space-between;
-        padding: 0 10px; font-size: 12px; border-bottom: 1px solid #e1e1e1;
+        padding: 0 10px; font-size: 12px; border-bottom: 1px solid #e1e1e1; flex-shrink: 0; cursor: move;
     }
-    .win-title { display: flex; align-items: center; gap: 8px; }
     .win-controls span { padding: 5px 10px; cursor: pointer; }
     .win-controls span:hover { background: #e81123; color: white; }
-    .win-footer { background: #f0f0f0; padding: 15px; text-align: right; border-top: 1px solid #ddd; }
-    .btn { padding: 6px 20px; border: 1px solid #ccc; background: #fff; border-radius: 4px; cursor: pointer; margin-left: 10px; }
+    .win-footer { background: #f0f0f0; padding: 15px; text-align: right; border-top: 1px solid #ddd; flex-shrink: 0; }
+    .btn { padding: 6px 20px; border: 1px solid #ccc; background: #fff; border-radius: 4px; cursor: pointer; margin-left: 10px; font-family: inherit;}
     .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
+    .btn:disabled { color: #999; cursor: not-allowed; background: #f9f9f9;}
 
     /* Run Window */
-    #run-win { width: 420px; height: auto; z-index: 5002; }
-    .run-content { padding: 20px; font-size: 13px; }
-    .run-icon-text { display: flex; gap: 15px; margin-bottom: 20px; }
-    .run-input-group { display: flex; align-items: center; gap: 10px; }
+    #run-win { width: 420px; z-index: 5005; }
+    
+    /* MMC: lusrmgr */
+    #mmc-win { width: 850px; height: 550px; z-index: 5010; }
+    .mmc-toolbar { display: flex; gap: 15px; padding: 5px 10px; border-bottom: 1px solid #ddd; font-size: 12px; background: #fff;}
+    .mmc-body { display: flex; flex-grow: 1; height: 0; background: #fff; }
+    .mmc-left { width: 220px; border-right: 1px solid #ddd; padding: 10px; overflow-y: auto; font-size: 13px; }
+    .mmc-center { flex-grow: 1; border-right: 1px solid #ddd; padding: 0; overflow-y: auto; font-size: 13px; background: #fff;}
+    .mmc-right { width: 180px; padding: 10px; overflow-y: auto; font-size: 13px; background: #f9f9f9; }
 
-    /* lusrmgr Window */
-    #lusrmgr-win { width: 750px; height: 500px; z-index: 5005; }
-    .lusrmgr-body { display: flex; height: calc(100% - 32px); }
-    .lusrmgr-sidebar { width: 220px; background: #fff; padding: 10px; border-right: 1px solid #ccc; font-size: 13px; }
-    .lusrmgr-content { flex-grow: 1; padding: 10px; font-size: 13px; background: #fff; overflow-y:auto; }
-    .tree-item { padding: 5px; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+    .tree-item { padding: 5px; cursor: pointer; display: flex; align-items: center; gap: 8px; border-radius:3px; margin-bottom: 2px;}
     .tree-item:hover { background: #e5f1fb; }
     .tree-item.active { background: #cce8ff; }
-    .mgr-table { width: 100%; border-collapse: collapse; display: none; }
-    .mgr-table th { text-align: left; padding: 5px; border-bottom: 1px solid #ddd; font-weight: normal; color: #666; }
-    .mgr-table td { padding: 5px; border-bottom: 1px solid #eee; cursor: pointer; }
-    .mgr-table tr:hover td { background: #e5f1fb; }
-    .disabled-icon { position: relative; }
-    .disabled-icon::after { content: '↓'; position: absolute; bottom: -2px; right: -2px; background: white; color: red; font-size: 10px; border-radius: 50%; font-weight: bold; width: 12px; height: 12px; text-align: center; line-height: 12px; border: 1px solid red;}
 
-    /* Context Menu */
-    #context-menu {
-        position: absolute; background: #fff; border: 1px solid #ccc; box-shadow: 2px 2px 10px rgba(0,0,0,0.2);
-        z-index: 9999; display: none; padding: 5px 0; border-radius: 4px; font-size: 13px; width: 180px;
-    }
-    .ctx-item { padding: 8px 15px; cursor: pointer; }
-    .ctx-item:hover { background: #e5f1fb; }
+    .list-table { width: 100%; border-collapse: collapse; }
+    .list-table th { text-align: left; padding: 5px 10px; border-bottom: 1px solid #ccc; border-right: 1px solid #eee; font-weight: normal; color: #555; background: #f9f9f9; font-size: 12px;}
+    .list-table td { padding: 5px 10px; border-bottom: 1px solid #eee; border-right: 1px solid #eee; cursor: default; display: flex; align-items: center; gap: 8px;}
+    .list-table tr:hover td { background: #e5f1fb; }
+    .list-table tr.selected td { background: #cce8ff; }
 
-    /* Sub-dialogs */
-    .dialog-form { padding: 20px; font-size: 13px; }
-    .dialog-row { margin-bottom: 15px; display: flex; align-items: center; }
-    .dialog-row label { width: 140px; }
-    .dialog-row input[type="text"], .dialog-row input[type="password"] { flex-grow: 1; padding: 5px; border: 1px solid #ccc; }
+    .action-group { margin-bottom: 15px; }
+    .action-group-title { font-weight: bold; margin-bottom: 5px; border-bottom: 1px solid #ccc; padding-bottom: 3px; }
+    .action-item { padding: 4px 5px; cursor: pointer; display: flex; align-items: center; gap: 5px; color: #0067C0; }
+    .action-item:hover { text-decoration: underline; }
+
+    /* New User Dialog */
+    #new-user-win { width: 450px; z-index: 5020; }
+    .nu-row { display: flex; align-items: center; margin-bottom: 10px; font-size: 13px; }
+    .nu-row label { width: 140px; }
+    .nu-row input[type="text"], .nu-row input[type="password"] { flex-grow: 1; padding: 4px; border: 1px solid #ccc; }
     
-    /* Login / Lock Screen Overlay */
-    #login-screen {
-        position: absolute; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(15px);
-        z-index: 9500; display: none; flex-direction: column; align-items: center; justify-content: center; color: white;
-    }
-    .user-list { display: flex; gap: 30px; margin-bottom: 30px; }
-    .user-card { display: flex; flex-direction: column; align-items: center; cursor: pointer; opacity: 0.6; transition: 0.2s; }
-    .user-card:hover { opacity: 0.9; }
-    .user-card.active { opacity: 1; }
-    .user-avatar { width: 80px; height: 80px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; margin-bottom: 10px; color:white; }
-    .login-box { display: none; flex-direction: column; align-items: center; }
-    .login-box input { padding: 10px; font-size: 16px; border-radius: 4px; border: none; outline: none; margin-bottom: 10px; width: 220px; }
+    /* Set Password Warning */
+    #sp-warn-win { width: 450px; z-index: 5030; }
+    #sp-input-win { width: 400px; z-index: 5040; }
+
+    /* Properties Window */
+    #prop-win { width: 400px; height: 500px; z-index: 5050; }
+    .prop-tabs { display:flex; padding:5px 5px 0 5px; gap:2px; background:#fff; border-bottom:1px solid #ccc; font-size:12px; }
+    .prop-tab { padding:4px 10px; cursor:pointer; border:1px solid transparent; border-bottom:none; border-radius:3px 3px 0 0; margin-bottom:-1px;}
+    .prop-tab.active { background:#fff; border:1px solid #ccc; border-bottom-color:#fff; }
+    .prop-body { display:none; background:#fff; flex-grow:1; padding:20px; font-size:13px; border:1px solid #ccc; border-top:none; margin:0 5px 5px 5px; overflow-y:auto;}
+    .prop-body.active { display:block; }
+
+    /* Add Group Window */
+    #add-group-win { width: 450px; z-index: 5060; }
+
+    #context-menu { position: absolute; background: #fff; border: 1px solid #ccc; box-shadow: 2px 2px 10px rgba(0,0,0,0.2); z-index: 9999; display: none; padding: 5px 0; border-radius: 4px; font-size: 13px; width: 220px; }
+    .ctx-item { padding: 8px 15px; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+    .ctx-item:hover { background: #e5f1fb; }
+    .ctx-item.disabled { color: #999; cursor: default; }
+    .ctx-item.disabled:hover { background: #fff; }
 
 </style>
 </head>
-<body onclick="hideContextMenu(); hideUserMenu();">
-
-    <!-- INSTRUCTION PANEL -->
-    <div id="instruction-panel">
-        <h3>📋 Lab Guide</h3>
-        <p id="instruction-text"></p>
-    </div>
+<body onclick="hideContextMenu(); hideStartMenu(); document.getElementById('profile-dropdown').style.display='none';">
 
     <!-- Desktop -->
     <div id="desktop">
         
         <!-- Start Menu -->
         <div id="start-menu" onclick="event.stopPropagation()">
-            <input type="text" class="sm-search-input" id="sm-search-input" placeholder="Type here to search" oninput="handleStartSearch()">
+            <input type="text" class="sm-search-input" id="sm-search-input" placeholder="Type here to search (run...)" oninput="handleSearch()">
+            <div id="sm-results" style="flex-grow:1; overflow-y:auto;"><p style="text-align:center; color:#888; font-size:13px; margin-top:50px;">Start typing to search...</p></div>
             
-            <div id="sm-default-view" style="flex-grow: 1;">
-                <div style="font-weight: bold; margin-bottom: 15px;">Pinned</div>
-                <div class="sm-grid">
-                    <div class="sm-item"><div class="icon">⚙️</div><div class="text">Settings</div></div>
-                    <div class="sm-item"><div class="icon">📁</div><div class="text">Explorer</div></div>
-                    <div class="sm-item"><div class="icon">🌐</div><div class="text">Edge</div></div>
+            <!-- User Profile Area in Start Menu -->
+            <div style="border-top:1px solid #eee; padding-top:15px; margin-top:10px; display:flex; justify-content:space-between; align-items:center; position:relative;">
+                <div style="display:flex; align-items:center; gap:10px; cursor:pointer; padding:5px 10px; border-radius:5px;" class="sm-profile-hover" onclick="toggleProfileMenu(event)">
+                    <span style="font-size:24px;">👤</span> <b id="sm-username">Admin</b>
                 </div>
-            </div>
-
-            <div id="sm-search-view" style="display: none; flex-grow: 1;">
-                <div style="font-weight: bold; margin-bottom: 15px;">Best match</div>
-                <div id="sm-search-results"></div>
-            </div>
-            
-            <!-- User Profile & Power Button -->
-            <div class="sm-footer">
-                <div class="sm-user" onclick="toggleUserMenu(event)">
-                    <div class="user-avatar-small" id="sm-avatar">👨‍💻</div>
-                    <span id="sm-username">Administrator</span>
+                <div style="font-size:20px; cursor:pointer; padding:5px 10px;" class="sm-profile-hover">⏻</div>
+                
+                <!-- Sign out dropdown -->
+                <div id="profile-dropdown" style="display:none; position:absolute; bottom:55px; left:10px; background:#fff; border:1px solid #ccc; border-radius:5px; box-shadow:0 2px 10px rgba(0,0,0,0.2); padding:5px; width:150px; z-index:8000;">
+                    <div class="ctx-item" onclick="performSignOut()">Sign out</div>
                 </div>
-                <div class="sm-power">⏻</div>
-            </div>
-
-            <!-- Switch User Context Menu inside Start -->
-            <div class="sm-user-menu" id="sm-user-menu">
-                <div onclick="showLoginScreen()">Switch user / Sign out</div>
             </div>
         </div>
 
-        <!-- Taskbar -->
         <div class="taskbar">
-            <div class="tb-icon" onclick="toggleStartMenu(event)" title="Start">🪟</div>
+            <div class="tb-icon" onclick="toggleStartMenu(event)">🪟</div>
+        </div>
+
+        <!-- Lock / Login Screen Overlay -->
+        <div id="login-screen">
+            <!-- Lock View (Clock) -->
+            <div id="lock-view" onclick="showLoginView()">
+                <div style="font-size: 80px; text-align: center; margin-top: 10%; font-weight: 300;" id="clock-time">12:00</div>
+                <div style="font-size: 20px; text-align: center;" id="clock-date">Monday, September 21</div>
+            </div>
+            
+            <!-- Login View -->
+            <div id="login-view">
+                <!-- User Selection List -->
+                <div style="position:absolute; bottom:40px; left:40px; display:flex; flex-direction:column; gap:10px;">
+                    <div class="login-user-sel active" id="sel-Admin" onclick="selectUserForLogin('Admin')">
+                        <span style="font-size:30px;">👤</span>
+                        <div><div style="font-weight:bold;">Admin</div><div style="font-size:11px; opacity:0.7;">Local Account</div></div>
+                    </div>
+                    <div class="login-user-sel" id="sel-examuser" style="display:none;" onclick="selectUserForLogin('examuser')">
+                        <span style="font-size:30px;">👤</span>
+                        <div><div style="font-weight:bold;">examuser</div><div style="font-size:11px; opacity:0.7;">Local Account</div></div>
+                    </div>
+                </div>
+                
+                <!-- Login Center Area -->
+                <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); display:flex; flex-direction:column; align-items:center; gap:15px; width:300px;">
+                    <div style="font-size:100px; line-height:1; background:rgba(255,255,255,0.2); border-radius:50%; padding:10px;">👤</div>
+                    <div style="font-size:28px; font-weight:600;" id="login-username-disp">Admin</div>
+                    
+                    <!-- Password Field (Only for examuser in this lab) -->
+                    <div id="login-pwd-area" style="display:none; width:100%; flex-direction:row; align-items:center; background:rgba(255,255,255,0.9); border-radius:4px; overflow:hidden;">
+                        <input type="password" id="login-pwd-in" placeholder="Password" style="flex-grow:1; padding:10px; border:none; outline:none; background:transparent; color:#000;" onkeypress="if(event.key==='Enter') doLogin()">
+                        <button onclick="doLogin()" style="padding:10px 15px; border:none; cursor:pointer; background:rgba(0,0,0,0.1); color:#000; font-weight:bold;">→</button>
+                    </div>
+                    
+                    <!-- Sign In Button (For Admin) -->
+                    <button id="login-signin-btn" onclick="doLogin()" style="padding:8px 40px; border-radius:4px; border:1px solid rgba(255,255,255,0.5); cursor:pointer; background:rgba(0,0,0,0.3); color:white; font-size:16px;">Sign in</button>
+                    
+                    <div id="login-err" style="color:#ff8a80; font-size:13px; display:none; background:rgba(0,0,0,0.5); padding:5px 10px; border-radius:4px;">Incorrect password. Try again.</div>
+                </div>
+            </div>
         </div>
 
         <!-- Run Window -->
         <div class="window" id="run-win">
             <div class="win-header">
-                <div class="win-title">
-                    <span style="display:flex;align-items:center;">
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="#0067C0" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zM1 3.5a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5V5H1V3.5zM1 6h14v6.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5V6zm2 2.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5z"/>
-                        </svg>
-                    </span> 
-                    Run
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="#0067C0"><path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zM1 3.5a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5V5H1V3.5zM1 6h14v6.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5V6zm2 2.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5z"/></svg> Run
                 </div>
                 <div class="win-controls"><span onclick="closeWin('run-win')">✖</span></div>
             </div>
-            <div class="run-content">
-                <div class="run-icon-text">
-                    <div style="font-size: 32px; line-height: 1;">🪟</div>
-                    <div>Type the name of a program, folder, document, or Internet resource, and Windows will open it for you.</div>
+            <div style="padding:20px;">
+                <div style="display:flex; gap:15px; margin-bottom: 20px;">
+                    <svg width="32" height="32" viewBox="0 0 16 16" fill="#0067C0"><path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zM1 3.5a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5V5H1V3.5zM1 6h14v6.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5V6zm2 2.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5z"/></svg>
+                    <span style="font-size: 13px; color: #333; line-height:1.4;">Type the name of a program, folder, document, or Internet resource, and Windows will open it for you.</span>
                 </div>
-                <div class="run-input-group">
-                    <label style="font-weight: 500;">Open:</label>
-                    <input type="text" id="run-input" style="flex-grow: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px;" onkeypress="if(event.key==='Enter') executeRun()">
+                <div style="display:flex; align-items:center; gap:10px; font-size:13px;">
+                    <label style="font-weight:500;">Open:</label>
+                    <input type="text" id="run-input" style="flex-grow:1; padding:6px; border:1px solid #ccc; border-radius:3px; font-family:inherit;" onkeypress="if(event.key==='Enter') execRun()">
                 </div>
             </div>
-            <div class="win-footer">
-                <button class="btn btn-primary" onclick="executeRun()">OK</button>
-                <button class="btn" onclick="closeWin('run-win')">Cancel</button>
-            </div>
+            <div class="win-footer"><button class="btn btn-primary" onclick="execRun()">OK</button><button class="btn" onclick="closeWin('run-win')">Cancel</button></div>
         </div>
 
-        <!-- lusrmgr Window -->
-        <div class="window" id="lusrmgr-win">
+        <!-- MMC: lusrmgr.msc -->
+        <div class="window" id="mmc-win">
             <div class="win-header">
-                <div class="win-title"><span>👥</span> lusrmgr - [Local Users and Groups (Local)]</div>
-                <div class="win-controls"><span onclick="closeWin('lusrmgr-win')">✖</span></div>
+                <div style="display:flex; align-items:center; gap:8px;"><span>👤</span> lusrmgr - [Local Users and Groups (Local)]</div>
+                <div class="win-controls"><span onclick="closeWin('mmc-win')">✖</span></div>
             </div>
-            <div class="lusrmgr-body">
-                <div class="lusrmgr-sidebar">
-                    <div style="font-weight:bold; margin-bottom: 10px;">🖥️ Local Users and Groups</div>
-                    <div class="tree-item" id="tree-users" onclick="activateUsersList()">📁 Users</div>
-                    <div class="tree-item">📁 Groups</div>
+            <div class="mmc-toolbar"><div>File</div><div>Action</div><div>View</div><div>Help</div></div>
+            <div class="mmc-body">
+                <div class="mmc-left">
+                    <div class="tree-item" style="font-weight:bold;">💻 Local Users and Groups</div>
+                    <div class="tree-item" id="nav-users" onclick="showUsers()" style="margin-left:15px;">📁 Users</div>
+                    <div class="tree-item" style="margin-left:15px;">📁 Groups</div>
                 </div>
-                <div class="lusrmgr-content" id="lusrmgr-content" oncontextmenu="handleEmptyRightClick(event)">
-                    <table class="mgr-table" id="mgr-table">
-                        <thead>
-                            <tr><th>Name</th><th>Full Name</th><th>Description</th></tr>
-                        </thead>
-                        <tbody id="user-table-body">
-                            <tr><td><span class="icon">👤</span> Administrator</td><td></td><td>Built-in account for administering...</td></tr>
-                            <tr><td><span class="icon">👤</span> Guest</td><td></td><td>Built-in account for guest access...</td></tr>
-                        </tbody>
-                    </table>
+                <div class="mmc-center" id="mmc-center" oncontextmenu="rcCenter(event)"></div>
+                <div class="mmc-right" id="mmc-right">
+                    <div class="action-group"><div class="action-group-title">Actions</div><div class="action-item">More Actions</div></div>
                 </div>
             </div>
         </div>
 
-        <!-- Context Menu -->
-        <div id="context-menu">
-            <!-- Dynamic Content -->
+        <!-- New User Dialog -->
+        <div class="window" id="new-user-win">
+            <div class="win-header"><div>New User</div><div class="win-controls"><span onclick="closeWin('new-user-win')">✖</span></div></div>
+            <div style="padding:20px; font-size:13px; flex-grow:1;">
+                <div class="nu-row"><label>User name:</label><input type="text" id="nu-name" onkeyup="checkNewUser()"></div>
+                <div class="nu-row"><label>Full name:</label><input type="text"></div>
+                <div class="nu-row"><label>Description:</label><input type="text"></div>
+                <div class="nu-row"><label>Password:</label><input type="password" id="nu-p1" onkeyup="checkNewUser()"></div>
+                <div class="nu-row"><label>Confirm password:</label><input type="password" id="nu-p2" onkeyup="checkNewUser()"></div>
+                <div style="margin-top:15px; padding-top:15px; border-top:1px solid #eee;">
+                    <label style="display:block; margin-bottom:8px;"><input type="checkbox" id="nu-cb1" checked onchange="togglePwCb()"> User must change password at next logon</label>
+                    <label style="display:block; margin-bottom:8px; color:#666;"><input type="checkbox" id="nu-cb2" disabled onchange="checkNewUser()"> User cannot change password</label>
+                    <label style="display:block; margin-bottom:8px; color:#666;"><input type="checkbox" id="nu-cb3" disabled onchange="checkNewUser()"> Password never expires</label>
+                    <label style="display:block; margin-bottom:8px;"><input type="checkbox"> Account is disabled</label>
+                </div>
+            </div>
+            <div class="win-footer"><button class="btn btn-primary" id="btn-create-user" disabled onclick="createUser()">Create</button><button class="btn" onclick="closeNuWin()">Close</button></div>
         </div>
 
-        <!-- New User Window -->
-        <div class="window" id="new-user-win" style="width: 450px; z-index: 5100;">
-            <div class="win-header">
-                <div class="win-title">New User</div>
-                <div class="win-controls"><span onclick="closeWin('new-user-win')">✖</span></div>
+        <!-- Set Password Warning -->
+        <div class="window" id="sp-warn-win">
+            <div class="win-header"><div>Set Password for examuser</div><div class="win-controls"><span onclick="closeWin('sp-warn-win')">✖</span></div></div>
+            <div style="padding:20px; font-size:13px; flex-grow:1; display:flex; gap:15px;">
+                <div style="font-size:30px; color:#d84315;">⚠️</div>
+                <div><b>Resetting this password might cause irreversible loss of information for this user account.</b><br><br>For security reasons, Windows protects certain information by making it inaccessible if the password is reset. Only use this command if the user has forgotten their password.</div>
             </div>
-            <div class="dialog-form">
-                <div class="dialog-row"><label>User name:</label><input type="text" id="nu-name"></div>
-                <div class="dialog-row"><label>Full name:</label><input type="text" id="nu-fullname"></div>
-                <div class="dialog-row"><label>Description:</label><input type="text" id="nu-desc"></div>
-                <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
-                <div class="dialog-row"><label>Password:</label><input type="password" id="nu-pass"></div>
-                <div class="dialog-row"><label>Confirm password:</label><input type="password" id="nu-pass2"></div>
+            <div class="win-footer"><button class="btn btn-primary" onclick="proceedPassword()">Proceed</button><button class="btn" onclick="closeWin('sp-warn-win')">Cancel</button></div>
+        </div>
+
+        <!-- Set Password Input -->
+        <div class="window" id="sp-input-win">
+            <div class="win-header"><div>Set Password for examuser</div><div class="win-controls"><span onclick="closeWin('sp-input-win')">✖</span></div></div>
+            <div style="padding:20px; font-size:13px; flex-grow:1;">
+                <div class="nu-row"><label>New password:</label><input type="password" id="sp-p1"></div>
+                <div class="nu-row"><label>Confirm password:</label><input type="password" id="sp-p2"></div>
+            </div>
+            <div class="win-footer"><button class="btn btn-primary" onclick="savePassword()">OK</button><button class="btn" onclick="closeWin('sp-input-win')">Cancel</button></div>
+        </div>
+
+        <!-- Properties Window -->
+        <div class="window" id="prop-win">
+            <div class="win-header"><div>examuser Properties</div><div class="win-controls"><span onclick="closeWin('prop-win')">✖</span></div></div>
+            <div style="padding:0; flex-grow:1; display:flex; flex-direction:column; background:#f0f0f0;">
+                <div class="prop-tabs">
+                    <div id="tab-gen" class="prop-tab active" onclick="switchPropTab('gen')">General</div>
+                    <div id="tab-mem" class="prop-tab" onclick="switchPropTab('mem')">Member Of</div>
+                    <div class="prop-tab">Profile</div>
+                </div>
                 
-                <div style="margin-top: 15px;">
-                    <label style="display:block; margin-bottom:5px;"><input type="checkbox" id="nu-must-change" checked> User must change password at next logon</label>
-                    <label style="display:block; margin-bottom:5px;"><input type="checkbox" id="nu-never-expire"> Password never expires</label>
-                    <label style="display:block; margin-bottom:5px;"><input type="checkbox" id="nu-disabled"> Account is disabled</label>
+                <div id="body-gen" class="prop-body active">
+                    <div style="display:flex; align-items:center; gap:10px; border-bottom:1px solid #eee; padding-bottom:15px; margin-bottom:15px;">
+                        <span style="font-size:30px;">👤</span> <b>examuser</b>
+                    </div>
+                    <div class="nu-row"><label style="width:100px;">Full name:</label><input type="text" readonly style="background:#f9f9f9;"></div>
+                    <div class="nu-row"><label style="width:100px;">Description:</label><input type="text" readonly style="background:#f9f9f9;"></div>
+                    <div style="margin-top:15px; border-top:1px solid #eee; padding-top:15px;">
+                        <label style="display:block; margin-bottom:8px;"><input type="checkbox"> User must change password at next logon</label>
+                        <label style="display:block; margin-bottom:8px;"><input type="checkbox"> User cannot change password</label>
+                        <label style="display:block; margin-bottom:8px;"><input type="checkbox" checked> Password never expires</label>
+                        <label style="display:block; margin-bottom:8px;"><input type="checkbox" id="cb-disable"> Account is disabled</label>
+                        <label style="display:block; margin-bottom:8px;"><input type="checkbox"> Account is locked out</label>
+                    </div>
+                </div>
+
+                <div id="body-mem" class="prop-body">
+                    <p style="margin-top:0;">Member of:</p>
+                    <select id="user-groups-list" size="5" style="width:100%; padding:5px; border:1px solid #ccc; margin-bottom:10px;"><option>Users</option></select>
+                    <div style="display:flex; gap:10px;"><button class="btn" style="margin-left:0; padding:4px 15px;" onclick="openAddGroup()">Add...</button><button class="btn" style="padding:4px 15px;">Remove</button></div>
                 </div>
             </div>
-            <div class="win-footer">
-                <button class="btn btn-primary" onclick="createUser()">Create</button>
-                <button class="btn" onclick="closeWin('new-user-win')">Close</button>
-            </div>
+            <div class="win-footer"><button class="btn btn-primary" onclick="saveProperties()">OK</button><button class="btn" onclick="closeWin('prop-win')">Cancel</button></div>
         </div>
 
-        <!-- Set Password Warning Window -->
-        <div class="window" id="set-pass-warn-win" style="width: 450px; z-index: 5200;">
-            <div class="win-header">
-                <div class="win-title">Set Password for <span id="warn-user"></span></div>
-                <div class="win-controls"><span onclick="closeWin('set-pass-warn-win')">✖</span></div>
+        <!-- Add Group Dialog -->
+        <div class="window" id="add-group-win">
+            <div class="win-header"><div>Select Groups</div><div class="win-controls"><span onclick="closeWin('add-group-win')">✖</span></div></div>
+            <div style="padding:20px; font-size:13px; flex-grow:1;">
+                <p style="margin-top:0;">Select this object type:<br><input type="text" value="Groups" readonly style="width:75%; padding:4px;"> <button class="btn" style="margin-left:5px;">Object Types...</button></p>
+                <p>From this location:<br><input type="text" value="PC" readonly style="width:75%; padding:4px;"> <button class="btn" style="margin-left:5px;">Locations...</button></p>
+                <p>Enter the object names to select (examples):<br><textarea id="obj-name-in" style="width:100%; height:60px; padding:5px; margin-top:5px;"></textarea></p>
+                <button class="btn" style="margin-left:0;" onclick="checkNames()">Check Names</button>
             </div>
-            <div class="dialog-form">
-                <h3 style="color: #d9534f; margin-top:0;">⚠️ Resetting this password might cause irreversible loss of information.</h3>
-                <p>If you reset the password, the user might lose access to encrypted files, stored passwords, and personal security certificates.</p>
-            </div>
-            <div class="win-footer">
-                <button class="btn btn-primary" onclick="proceedSetPassword()">Proceed</button>
-                <button class="btn" onclick="closeWin('set-pass-warn-win')">Cancel</button>
-            </div>
+            <div class="win-footer"><button class="btn btn-primary" onclick="confirmAddGroup()">OK</button><button class="btn" onclick="closeWin('add-group-win')">Cancel</button></div>
         </div>
 
-        <!-- Set Password Input Window -->
-        <div class="window" id="set-pass-input-win" style="width: 400px; z-index: 5201;">
-            <div class="win-header">
-                <div class="win-title">Set Password</div>
-                <div class="win-controls"><span onclick="closeWin('set-pass-input-win')">✖</span></div>
-            </div>
-            <div class="dialog-form">
-                <div class="dialog-row"><label>New password:</label><input type="password" id="sp-pass"></div>
-                <div class="dialog-row"><label>Confirm password:</label><input type="password" id="sp-pass2"></div>
-            </div>
-            <div class="win-footer">
-                <button class="btn btn-primary" onclick="saveNewPassword()">OK</button>
-                <button class="btn" onclick="closeWin('set-pass-input-win')">Cancel</button>
-            </div>
-        </div>
+        <div id="context-menu"></div>
+    </div>
 
-        <!-- User Properties Window -->
-        <div class="window" id="user-prop-win" style="width: 420px; z-index: 5300;">
-            <div class="win-header">
-                <div class="win-title"><span id="up-title"></span> Properties</div>
-                <div class="win-controls"><span onclick="closeWin('user-prop-win')">✖</span></div>
-            </div>
-            <div style="display: flex; border-bottom: 1px solid #ccc; background: #fff; padding: 10px 10px 0 10px;">
-                <div class="prop-tab" id="tab-btn-gen" onclick="switchPropTab('gen')" style="padding: 5px 15px; border: 1px solid transparent; cursor: pointer; font-size: 13px; margin-bottom: -1px; background:#fff; border-color: #ccc #ccc #fff #ccc;">General</div>
-                <div class="prop-tab" id="tab-btn-mem" onclick="switchPropTab('mem')" style="padding: 5px 15px; border: 1px solid transparent; cursor: pointer; font-size: 13px; margin-bottom: -1px;">Member Of</div>
-            </div>
-            <div class="dialog-form" id="tab-gen" style="height: 250px;">
-                <label style="display:block; margin-top:20px;"><input type="checkbox" id="up-disabled"> Account is disabled</label>
-            </div>
-            <div class="dialog-form" id="tab-mem" style="display:none; height: 250px;">
-                <p style="margin-top:0;">Member of:</p>
-                <select multiple style="width: 100%; height: 120px; border: 1px solid #ccc; padding: 5px; outline:none;" id="member-list">
-                    <option>Users</option>
-                </select>
-                <div style="margin-top: 15px; display: flex; gap: 10px;">
-                    <button class="btn" style="margin:0;" onclick="openSelectGroup()">Add...</button>
-                </div>
-            </div>
-            <div class="win-footer">
-                <button class="btn btn-primary" onclick="saveUserProps()">OK</button>
-                <button class="btn" onclick="closeWin('user-prop-win')">Cancel</button>
-                <button class="btn" onclick="applyUserProps()">Apply</button>
-            </div>
+    <!-- LAB PANEL (Placed at the end so it floats over everything including Login screen) -->
+    <div id="exam-panel">
+        <div id="exam-header">
+            <b style="color: #0067C0; font-size:16px; margin:0; display:flex; align-items:center; gap:5px;"><span style="font-size:20px;">📋</span> Lab Guide</b>
+            <span style="cursor:pointer; font-size:12px; background:#eee; padding:4px 8px; border-radius:4px; color:#333; border:1px solid #ccc;" onclick="toggleExam(this)">Minimize</span>
         </div>
-
-        <!-- Select Group Window -->
-        <div class="window" id="select-group-win" style="width: 450px; z-index: 5400;">
-            <div class="win-header">
-                <div class="win-title">Select Groups</div>
-                <div class="win-controls"><span onclick="closeWin('select-group-win')">✖</span></div>
-            </div>
-            <div style="padding: 20px; font-size: 13px; background: #fff;">
-                <p>Enter the object names to select:</p>
-                <textarea id="group-input" style="width: 100%; height: 80px; border: 1px solid #ccc; padding: 8px; box-sizing: border-box; outline:none; resize: none;"></textarea>
-            </div>
-            <div class="win-footer">
-                <button class="btn btn-primary" onclick="addGroupToUser()">OK</button>
-                <button class="btn" onclick="closeWin('select-group-win')">Cancel</button>
-            </div>
-        </div>
-
-        <!-- Login Screen Overlay -->
-        <div id="login-screen">
-            <div class="user-list">
-                <div class="user-card active" onclick="selectLoginUser('Admin')">
-                    <div class="user-avatar">👨‍💻</div>
-                    <h3>Administrator</h3>
-                </div>
-                <div class="user-card" id="login-newuser-card" onclick="selectLoginUser('User1')" style="display: none;">
-                    <div class="user-avatar">👤</div>
-                    <h3 id="login-newuser-name">User1</h3>
-                </div>
-            </div>
-            <div class="login-box" id="login-box" style="display:flex;">
-                <input type="password" id="login-pass" placeholder="Password (Admin: blank)" onkeypress="if(event.key==='Enter') submitLogin()">
-                <button class="btn btn-primary" onclick="submitLogin()">Submit</button>
-                <p id="login-err" style="color:#ff8c8c; font-size:14px; display:none; margin-top:10px;">Incorrect password or disabled.</p>
-            </div>
-        </div>
-
+        <p id="instruction-text"></p>
     </div>
 
 <script>
-    // System State Variables
+    // --- Clock Logic for Lock Screen ---
+    setInterval(() => {
+        const now = new Date();
+        document.getElementById('clock-time').innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    }, 1000);
+
+    // --- Draggable Windows Logic ---
+    let highestZ = 5000;
+    document.addEventListener('mousedown', function(e) {
+        const header = e.target.closest('.win-header') || e.target.closest('#exam-header');
+        if (!header) return;
+        if (e.target.closest('.win-controls') || e.target.tagName === 'BUTTON' || (e.target.tagName === 'SPAN' && e.target.innerText === 'Minimize') || (e.target.tagName === 'SPAN' && e.target.innerText === 'Expand')) return;
+
+        e.preventDefault(); const win = header.parentElement;
+        if(win.classList.contains('window') || win.id === 'exam-panel') { 
+            if(win.id === 'exam-panel') highestZ = Math.max(highestZ, 15000); 
+            highestZ++; win.style.zIndex = highestZ; 
+        }
+
+        let rect = win.getBoundingClientRect(); win.style.right = 'auto'; win.style.bottom = 'auto';
+        if (window.getComputedStyle(win).transform !== 'none') { win.style.transform = 'none'; win.style.left = rect.left + 'px'; win.style.top = rect.top + 'px'; }
+
+        let shiftX = e.clientX - rect.left; let shiftY = e.clientY - rect.top;
+        function moveAt(pageX, pageY) { win.style.left = pageX - shiftX + 'px'; win.style.top = pageY - shiftY + 'px'; }
+        function onMouseMove(event) { moveAt(event.pageX, event.pageY); }
+        document.addEventListener('mousemove', onMouseMove);
+        document.onmouseup = function() { document.removeEventListener('mousemove', onMouseMove); document.onmouseup = null; };
+    });
+
+    // --- System States ---
     let currentStep = 1;
-    let selectedContextUser = "";
-    let newUserCreated = false;
-    let newUserName = "";
-    let newUserPass = "";
-    let isUserDisabled = false;
-    let isAdminGroupAdded = false;
-    let currentUserLogon = "Admin"; 
+    let userCreated = false;
+    let userDisabled = false;
+    let userGroups = ['Users'];
+    let activeUser = 'Admin';
+    let loginSelectedUser = 'Admin';
 
     const instructions = {
-        1: "<b>Step 1 (Admin Logon):</b> Click the <b>Start (🪟)</b> button, click the <b>Search Box</b>, type <code>run</code>, and select the <b>Run</b> app from the results.",
-        2: "<b>Step 2:</b> Type <code>lusrmgr.msc</code> in the Run dialog and click <b>OK</b> to open Local Users and Groups.",
-        3: "<b>Step 3:</b> Click on the <b>📁 Users</b> folder on the left sidebar to view local users.",
-        4: "<b>Step 4 (Create User):</b> Right-click on any empty white space inside the Users list area and select <b>New User...</b>",
-        5: "<b>Step 5:</b> Enter User name (e.g., <b>User1</b>) and a Password (e.g., <b>123</b>). <i>Uncheck</i> 'User must change password' and click <b>Create</b>, then click <b>Close</b>.",
-        6: "<b>Step 6:</b> The user is created! Now let's test it. Click the <b>Start (🪟)</b> button, click the <b>Administrator Profile</b> at the bottom, and select <b>Switch user / Sign out</b>.",
-        7: "<b>Step 7 (Test Logon):</b> Click on the new user profile, enter the password you created, and click Submit.",
-        8: "<b>Step 8 (Logged in as User1):</b> You successfully logged in! Now click <b>Start (🪟)</b>, click your User Profile at the bottom, and select <b>Switch user / Sign out</b> to return to the Admin account.",
-        9: "<b>Step 9 (Admin Logon):</b> We are back as Admin. Click <b>Start (🪟)</b>, search for <code>run</code> to open it. Then type <code>lusrmgr.msc</code> and click <b>OK</b>.",
-        10: "<b>Step 10:</b> Click the <b>📁 Users</b> folder. Right-click your new user and select <b>Set Password...</b>",
-        11: "<b>Step 11:</b> Click <b>Proceed</b> on the warning dialog.",
-        12: "<b>Step 12:</b> Enter a new password (e.g., <b>456</b>) and click <b>OK</b>.",
-        13: "<b>Step 13:</b> Password is reset. Now let's disable the account. <b>Double-click</b> the new user to open Properties.",
-        14: "<b>Step 14 (Disable Account):</b> Check <b>Account is disabled</b> and click <b>Apply</b>. The icon will change. <i>(Now uncheck it and click Apply again to re-enable it)</i>.",
-        15: "<b>Step 15 (Make Admin):</b> Click the <b>Member Of</b> tab at the top of the Properties window.",
-        16: "<b>Step 16:</b> Click the <b>Add...</b> button.",
-        17: "<b>Step 17:</b> Type <code>Administrators</code> in the box and click <b>OK</b>.",
-        18: "<b>Step 18:</b> The Administrators group is now added! Click <b>OK</b> to save and close the Properties window.",
-        19: "✅ <b>Lab Complete!</b> You have successfully managed a local user, changed passwords, toggled account status, and assigned Admin privileges."
+        1: "<b>Step 1:</b> Click the <b>Start (🪟)</b> button, search for <code>run</code>, and open the <b>Run</b> app.",
+        2: "<b>Step 2:</b> Type <code>lusrmgr.msc</code> and click <b>OK</b> to open Local Users and Groups.",
+        3: "<b>Step 3:</b> Click on the <b>Users</b> folder in the left pane.",
+        4: "<b>Step 4:</b> Right-click in the empty space in the middle pane and select <b>New User...</b>",
+        5: "<b>Step 5:</b> Type <code>examuser</code> as User name, <code>123</code> as password. <b>Uncheck</b> 'User must change password', <b>Check</b> 'Password never expires', click <b>Create</b>, then <b>Close</b>.",
+        6: "<b>Step 6:</b> The user is created! Now let's test it. Click <b>Start (🪟)</b>, click the Admin profile (👤) at the bottom, and select <b>Sign out</b>.",
+        7: "<b>Step 7:</b> Click anywhere to dismiss the lock screen. Select <b>examuser</b> from the bottom left, enter password <code>123</code> and log in.",
+        8: "<b>Step 8:</b> You are now logged in as examuser! Notice the empty desktop. Let's go back to manage the account. Click <b>Start -> Profile -> Sign out</b>.",
+        9: "<b>Step 9:</b> Select the <b>Admin</b> account and log in.",
+        10: "<b>Step 10:</b> Welcome back. Open <b>Run</b>, type <code>lusrmgr.msc</code> and go to the <b>Users</b> folder again.",
+        11: "<b>Step 11:</b> Right-click <code>examuser</code> and select <b>Set Password...</b>",
+        12: "<b>Step 12:</b> Click <b>Proceed</b>, enter a new password (e.g. <code>abc</code>), and click <b>OK</b>.",
+        13: "<b>Step 13:</b> Now let's disable the account. Right-click <code>examuser</code> and select <b>Properties</b>.",
+        14: "<b>Step 14:</b> Check the box <b>Account is disabled</b> and click <b>OK</b>.",
+        15: "<b>Step 15:</b> The account is disabled (notice the down arrow). Right-click <code>examuser</code> and select <b>Properties</b> again.",
+        16: "<b>Step 16:</b> Uncheck <b>Account is disabled</b> and click <b>OK</b> to re-enable the account.",
+        17: "<b>Step 17:</b> Now let's add the user to the Admin group. Right-click <code>examuser</code> and select <b>Properties</b>.",
+        18: "<b>Step 18:</b> Go to the <b>Member Of</b> tab.",
+        19: "<b>Step 19:</b> Click <b>Add...</b>",
+        20: "<b>Step 20:</b> Type <code>Administrators</code>, click <b>Check Names</b>, and then click <b>OK</b>.",
+        21: "<b>Step 21:</b> Click <b>OK</b> in the Properties window to save the group settings.",
+        22: "✅ <b>Lab Complete!</b> You successfully managed users, tested login switching, reset passwords, and assigned group memberships!"
     };
 
-    function updateGuide() {
-        document.getElementById('instruction-text').innerHTML = instructions[currentStep];
+    function updateGuide() { document.getElementById('instruction-text').innerHTML = instructions[currentStep]; }
+    function toggleExam(btn) {
+        const text = document.getElementById('instruction-text');
+        if(text.style.display === 'none') { text.style.display = 'block'; btn.innerText = 'Minimize'; } 
+        else { text.style.display = 'none'; btn.innerText = 'Expand'; }
     }
 
-    // Start Menu & Search Logic
-    function toggleStartMenu(e) {
-        if(e) e.stopPropagation();
-        const menu = document.getElementById('start-menu');
-        menu.classList.toggle('show');
-        if(menu.classList.contains('show')) {
-            document.getElementById('sm-search-input').value = '';
-            handleStartSearch();
-            document.getElementById('sm-search-input').focus();
-        } else {
-            hideUserMenu();
-        }
-    }
-
-    function handleStartSearch() {
-        const val = document.getElementById('sm-search-input').value.toLowerCase();
-        const defView = document.getElementById('sm-default-view');
-        const searchView = document.getElementById('sm-search-view');
-        const results = document.getElementById('sm-search-results');
-
-        if(val.length > 0) {
-            defView.style.display = 'none';
-            searchView.style.display = 'block';
-            
-            if(val.includes('run')) {
-                results.innerHTML = `
-                    <div class="search-res-item" onclick="openRun()">
-                        <div class="icon">
-                            <svg width="24" height="24" viewBox="0 0 16 16" fill="#0067C0" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zM1 3.5a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5V5H1V3.5zM1 6h14v6.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5V6zm2 2.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <div style="font-weight:bold; font-size:14px;">Run</div>
-                            <div style="font-size:12px; color:#666;">App</div>
-                        </div>
-                    </div>`;
-            } else if (val.includes('cmd') || val.includes('command')) {
-                results.innerHTML = `
-                    <div class="search-res-item">
-                        <div class="icon">⬛</div>
-                        <div>
-                            <div style="font-weight:bold; font-size:14px;">Command Prompt</div>
-                            <div style="font-size:12px; color:#666;">App</div>
-                        </div>
-                    </div>`;
-            } else {
-                results.innerHTML = `<div style="padding: 10px; color:#666;">No results found for '${val}'</div>`;
-            }
-        } else {
-            defView.style.display = 'block';
-            searchView.style.display = 'none';
-        }
-    }
-
-    function toggleUserMenu(e) {
-        if(e) e.stopPropagation();
-        const umenu = document.getElementById('sm-user-menu');
-        umenu.style.display = (umenu.style.display === 'flex') ? 'none' : 'flex';
-    }
-
-    function hideUserMenu() {
-        document.getElementById('sm-user-menu').style.display = 'none';
-    }
+    // --- Start Menu & Sign Out Logic ---
+    function toggleStartMenu(e) { e.stopPropagation(); document.getElementById('start-menu').classList.toggle('show'); document.getElementById('sm-search-input').focus(); document.getElementById('profile-dropdown').style.display='none';}
+    function hideStartMenu() { document.getElementById('start-menu').classList.remove('show'); document.getElementById('profile-dropdown').style.display='none'; }
+    function toggleProfileMenu(e) { e.stopPropagation(); const dd = document.getElementById('profile-dropdown'); dd.style.display = dd.style.display === 'none' ? 'block' : 'none'; }
     
-    function openRun() {
-        document.getElementById('start-menu').classList.remove('show');
-        hideUserMenu();
-        document.getElementById('run-win').classList.add('show');
-        document.getElementById('run-input').focus();
-        
-        if(currentStep === 1) { currentStep = 2; updateGuide(); }
-    }
-
-    function closeWin(id) {
-        document.getElementById(id).classList.remove('show');
-        if(id === 'new-user-win' && newUserCreated && currentStep === 5) {
-            currentStep = 6; updateGuide();
-        }
-    }
-
-    function executeRun() {
-        const val = document.getElementById('run-input').value.trim().toLowerCase();
-        if(val === 'lusrmgr.msc' || val === 'lusrmgr') {
-            document.getElementById('run-input').value = '';
-            closeWin('run-win');
-            document.getElementById('lusrmgr-win').classList.add('show');
-            if(currentStep === 2) { currentStep = 3; updateGuide(); }
-            if(currentStep === 9) { currentStep = 10; updateGuide(); }
-        } else {
-            alert("Windows cannot find '" + val + "'.");
-        }
-    }
-
-    // lusrmgr Logic
-    function activateUsersList() {
-        document.getElementById('tree-users').classList.add('active');
-        document.getElementById('mgr-table').style.display = 'table';
-        if(currentStep === 3) { currentStep = 4; updateGuide(); }
-        if(currentStep === 10) { currentStep = 10; updateGuide(); }
-    }
-
-    // Context Menu Logic
-    function handleEmptyRightClick(e) {
-        e.preventDefault();
-        if(e.target.tagName !== 'TD') {
-            showContextMenu(e, 'empty');
-        }
-    }
-
-    function handleUserRightClick(e, userName) {
-        e.preventDefault();
-        e.stopPropagation();
-        selectedContextUser = userName;
-        showContextMenu(e, 'user');
-    }
-
-    function showContextMenu(e, type) {
-        const menu = document.getElementById('context-menu');
-        menu.style.left = e.pageX + 'px';
-        menu.style.top = e.pageY + 'px';
-        menu.style.display = 'block';
-
-        if(type === 'empty') {
-            menu.innerHTML = `<div class="ctx-item" onclick="openNewUserDialog()">New User...</div>
-                              <div class="ctx-item" onclick="hideContextMenu()">Refresh</div>`;
-            if(currentStep === 4) { currentStep = 5; updateGuide(); }
-        } else if (type === 'user') {
-            menu.innerHTML = `<div class="ctx-item" onclick="openSetPasswordWarning()">Set Password...</div>
-                              <div class="ctx-item" onclick="hideContextMenu()">Delete</div>
-                              <div class="ctx-item" onclick="hideContextMenu()">Rename</div>
-                              <div style="border-top:1px solid #ccc; margin:3px 0;"></div>
-                              <div class="ctx-item" onclick="openUserProperties('${selectedContextUser}')">Properties</div>`;
-        }
-    }
-
-    function hideContextMenu() {
-        document.getElementById('context-menu').style.display = 'none';
-    }
-
-    // New User Dialog Logic
-    function openNewUserDialog() {
-        hideContextMenu();
-        document.getElementById('new-user-win').classList.add('show');
-        document.getElementById('nu-name').focus();
-    }
-
-    function createUser() {
-        const name = document.getElementById('nu-name').value.trim();
-        const pass1 = document.getElementById('nu-pass').value;
-        const pass2 = document.getElementById('nu-pass2').value;
-
-        if(!name) { alert("Enter a user name."); return; }
-        if(pass1 !== pass2) { alert("Passwords do not match."); return; }
-
-        newUserName = name;
-        newUserPass = pass1;
-        newUserCreated = true;
-
-        // Add to Table
-        const tbody = document.getElementById('user-table-body');
-        const tr = document.createElement('tr');
-        tr.oncontextmenu = (e) => handleUserRightClick(e, newUserName);
-        tr.ondblclick = () => openUserProperties(newUserName);
-        tr.id = 'row-' + newUserName;
-        tr.innerHTML = `<td><span class="icon" id="icon-${newUserName}">👤</span> ${newUserName}</td><td></td><td></td>`;
-        tbody.appendChild(tr);
-
-        // Add to Login Screen
-        document.getElementById('login-newuser-card').style.display = 'flex';
-        document.getElementById('login-newuser-name').innerText = newUserName;
-
-        alert(`User ${newUserName} has been created.`);
-        
-        document.getElementById('nu-name').value = '';
-        document.getElementById('nu-pass').value = '';
-        document.getElementById('nu-pass2').value = '';
-    }
-
-    // Login Screen Logic
-    function showLoginScreen() {
-        // CLOSE ALL OPEN WINDOWS TO RESET DESKTOP FOR NEXT USER
+    function performSignOut() {
+        hideStartMenu();
+        // Close all windows
         document.querySelectorAll('.window').forEach(w => w.classList.remove('show'));
-        document.getElementById('start-menu').classList.remove('show');
-        hideUserMenu();
         
+        // Show Login Screen
         document.getElementById('login-screen').style.display = 'flex';
-        document.getElementById('login-err').style.display = 'none';
-        document.getElementById('login-pass').value = '';
-
+        document.getElementById('lock-view').style.display = 'block';
+        document.getElementById('login-view').style.display = 'none';
+        
         if(currentStep === 6) { currentStep = 7; updateGuide(); }
+        if(currentStep === 8 && activeUser === 'examuser') { currentStep = 9; updateGuide(); }
     }
 
-    function selectLoginUser(user) {
-        document.querySelectorAll('.user-card').forEach(c => c.classList.remove('active'));
-        if(user === 'Admin') {
-            document.querySelector('.user-card:nth-child(1)').classList.add('active');
-            currentUserLogon = "Admin";
+    // --- Login Screen Logic ---
+    function showLoginView() {
+        document.getElementById('lock-view').style.display = 'none';
+        document.getElementById('login-view').style.display = 'block';
+        selectUserForLogin(loginSelectedUser);
+    }
+
+    function selectUserForLogin(user) {
+        loginSelectedUser = user;
+        document.querySelectorAll('.login-user-sel').forEach(el => el.classList.remove('active'));
+        document.getElementById('sel-' + user).classList.add('active');
+        document.getElementById('login-username-disp').innerText = user;
+        document.getElementById('login-err').style.display = 'none';
+
+        if(user === 'examuser') {
+            document.getElementById('login-pwd-area').style.display = 'flex';
+            document.getElementById('login-signin-btn').style.display = 'none';
+            document.getElementById('login-pwd-in').value = '';
+            document.getElementById('login-pwd-in').focus();
         } else {
-            document.getElementById('login-newuser-card').classList.add('active');
-            currentUserLogon = newUserName;
+            document.getElementById('login-pwd-area').style.display = 'none';
+            document.getElementById('login-signin-btn').style.display = 'block';
         }
-        document.getElementById('login-pass').focus();
     }
 
-    function submitLogin() {
-        const pass = document.getElementById('login-pass').value;
-        const err = document.getElementById('login-err');
-
-        if(currentUserLogon === "Admin") {
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('sm-username').innerText = "Administrator";
-            document.getElementById('sm-avatar').innerText = "👨‍💻";
-            
-            if(currentStep === 8 || currentStep === 7) { currentStep = 9; updateGuide(); }
-        } else {
-            if(isUserDisabled) {
-                err.innerText = "Your account has been disabled. Please see your system administrator.";
-                err.style.display = 'block';
-            } else if(pass === newUserPass) {
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('sm-username').innerText = newUserName;
-                document.getElementById('sm-avatar').innerText = "👤";
-                
+    function doLogin() {
+        if(loginSelectedUser === 'examuser') {
+            const pwd = document.getElementById('login-pwd-in').value;
+            if(pwd === '123') {
+                activeUser = 'examuser';
+                finishLogin();
                 if(currentStep === 7) { currentStep = 8; updateGuide(); }
             } else {
-                err.innerText = "The password is incorrect. Try again.";
-                err.style.display = 'block';
+                document.getElementById('login-err').style.display = 'block';
+            }
+        } else {
+            activeUser = 'Admin';
+            finishLogin();
+            if(currentStep === 9) { currentStep = 10; updateGuide(); }
+        }
+    }
+
+    function finishLogin() {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('sm-username').innerText = activeUser;
+        // Visual indicator of different desktop
+        if(activeUser === 'examuser') {
+            document.getElementById('desktop').style.filter = 'brightness(0.9)';
+        } else {
+            document.getElementById('desktop').style.filter = 'none';
+        }
+    }
+
+
+    // --- Search & Run ---
+    function handleSearch() {
+        const val = document.getElementById('sm-search-input').value.toLowerCase();
+        const res = document.getElementById('sm-results');
+        if(val.includes('run')) {
+            res.innerHTML = `<div class="search-res-item" onclick="openRunWin()"><div class="svg-icon"><svg width="28" height="28" viewBox="0 0 16 16" fill="#0067C0"><path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zM1 3.5a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5V5H1V3.5zM1 6h14v6.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5V6zm2 2.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5z"/></svg></div><div><div style="font-weight:600; font-size:14px;">Run</div><div style="font-size:12px; color:#666;">App</div></div></div>`;
+            if(currentStep === 1) { currentStep = 2; updateGuide(); }
+        } else { res.innerHTML = `<p style="text-align:center; color:#888; font-size:13px; margin-top:50px;">Start typing...</p>`; }
+    }
+    function openRunWin() { hideStartMenu(); highestZ++; document.getElementById('run-win').style.zIndex=highestZ; document.getElementById('run-win').classList.add('show'); document.getElementById('run-input').focus(); }
+    function closeWin(id) { document.getElementById(id).classList.remove('show'); }
+
+    function execRun() {
+        if(activeUser !== 'Admin') { alert("Access Denied: Standard users cannot run MMC snap-ins."); return; }
+        const val = document.getElementById('run-input').value.toLowerCase().trim();
+        if(val === 'lusrmgr.msc') {
+            closeWin('run-win'); document.getElementById('run-input').value = '';
+            highestZ++; document.getElementById('mmc-win').style.zIndex=highestZ; document.getElementById('mmc-win').classList.add('show');
+            if(currentStep === 2 || currentStep === 10) { currentStep++; updateGuide(); }
+        } else { alert("Windows cannot find '" + val + "'. Check spelling."); }
+    }
+
+    // --- MMC: lusrmgr ---
+    function showUsers() {
+        document.querySelectorAll('.tree-item').forEach(i=>i.classList.remove('active'));
+        document.getElementById('nav-users').classList.add('active');
+        renderUserList();
+        if(currentStep === 3) { currentStep = 4; updateGuide(); }
+    }
+
+    function renderUserList() {
+        const center = document.getElementById('mmc-center');
+        let html = `<table class="list-table"><tr><th>Name</th><th>Full Name</th><th>Description</th></tr>`;
+        html += `<tr><td><span style="font-size:16px;">👤</span> Administrator</td><td></td><td>Built-in account for administering the computer/domain</td></tr>`;
+        html += `<tr><td><span style="font-size:16px; position:relative;">👤<span style="position:absolute;font-size:10px;margin-top:5px;margin-left:-10px;">⬇️</span></span> DefaultAccount</td><td></td><td>A user account managed by the system.</td></tr>`;
+        html += `<tr><td><span style="font-size:16px; position:relative;">👤<span style="position:absolute;font-size:10px;margin-top:5px;margin-left:-10px;">⬇️</span></span> Guest</td><td></td><td>Built-in account for guest access to the computer/domain</td></tr>`;
+        
+        if(userCreated) {
+            let uIcon = userDisabled ? `👤<span style="position:absolute;font-size:10px;margin-top:5px;margin-left:-10px;">⬇️</span>` : `👤`;
+            html += `<tr oncontextmenu="rcUser(event)"><td><span style="font-size:16px; position:relative;">${uIcon}</span> examuser</td><td></td><td></td></tr>`;
+        }
+        html += `</table>`;
+        center.innerHTML = html;
+    }
+
+    // --- Context Menus ---
+    function hideContextMenu() { document.getElementById('context-menu').style.display = 'none'; document.querySelectorAll('.list-table tr').forEach(r=>r.classList.remove('selected')); }
+    
+    function rcCenter(e) {
+        e.preventDefault(); e.stopPropagation(); hideContextMenu();
+        if(e.target.closest('tr')) return; 
+        if(!document.getElementById('nav-users').classList.contains('active')) return;
+        
+        const menu = document.getElementById('context-menu');
+        menu.style.left = e.pageX+'px'; menu.style.top = e.pageY+'px'; menu.style.display = 'block';
+        menu.innerHTML = `<div class="ctx-item" onclick="openNewUser()">New User...</div><div style="border-top:1px solid #ccc; margin:3px 0;"></div><div class="ctx-item">View</div><div class="ctx-item">Refresh</div><div class="ctx-item">Export List...</div><div style="border-top:1px solid #ccc; margin:3px 0;"></div><div class="ctx-item">Help</div>`;
+    }
+
+    function rcUser(e) {
+        e.preventDefault(); e.stopPropagation(); hideContextMenu();
+        e.currentTarget.classList.add('selected');
+        const menu = document.getElementById('context-menu');
+        menu.style.left = e.pageX+'px'; menu.style.top = e.pageY+'px'; menu.style.display = 'block';
+        menu.innerHTML = `<div class="ctx-item" onclick="openSetPassWarn()">Set Password...</div><div style="border-top:1px solid #ccc; margin:3px 0;"></div><div class="ctx-item disabled">Delete</div><div class="ctx-item disabled">Rename</div><div style="border-top:1px solid #ccc; margin:3px 0;"></div><div class="ctx-item" onclick="openProperties()">Properties</div><div style="border-top:1px solid #ccc; margin:3px 0;"></div><div class="ctx-item">Help</div>`;
+    }
+
+    // --- New User Logic ---
+    function openNewUser() { 
+        hideContextMenu(); 
+        highestZ++; document.getElementById('new-user-win').style.zIndex=highestZ; 
+        document.getElementById('new-user-win').classList.add('show'); 
+        document.getElementById('nu-name').focus(); 
+        if(currentStep === 4) { currentStep = 5; updateGuide(); } 
+    }
+    
+    function togglePwCb() {
+        let cb1 = document.getElementById('nu-cb1'); let cb2 = document.getElementById('nu-cb2'); let cb3 = document.getElementById('nu-cb3');
+        if(cb1.checked) { 
+            cb2.disabled = true; cb2.checked = false; cb3.disabled = true; cb3.checked = false; 
+            document.getElementById('nu-cb2').parentElement.style.color = '#666'; document.getElementById('nu-cb3').parentElement.style.color = '#666'; 
+        } else { 
+            cb2.disabled = false; cb3.disabled = false; 
+            document.getElementById('nu-cb2').parentElement.style.color = '#000'; document.getElementById('nu-cb3').parentElement.style.color = '#000'; 
+        }
+        checkNewUser();
+    }
+
+    function checkNewUser() {
+        let n = document.getElementById('nu-name').value.trim().toLowerCase();
+        let p1 = document.getElementById('nu-p1').value;
+        let p2 = document.getElementById('nu-p2').value;
+        let cb1 = document.getElementById('nu-cb1').checked;
+        let cb3 = document.getElementById('nu-cb3').checked;
+        
+        let btn = document.getElementById('btn-create-user');
+        if(n === 'examuser' && p1.length > 0 && p1 === p2 && !cb1 && cb3) { btn.disabled = false; } else { btn.disabled = true; }
+    }
+
+    function createUser() { 
+        userCreated = true; renderUserList(); 
+        document.getElementById('sel-examuser').style.display = 'flex'; // Show in login screen
+        document.getElementById('nu-name').value = ''; document.getElementById('nu-p1').value = ''; document.getElementById('nu-p2').value = ''; 
+        alert("User examuser has been successfully created."); 
+    }
+    function closeNuWin() { 
+        closeWin('new-user-win'); 
+        if(userCreated && currentStep === 5) { currentStep = 6; updateGuide(); } 
+    }
+
+    // --- Set Password Logic ---
+    function openSetPassWarn() { hideContextMenu(); highestZ++; document.getElementById('sp-warn-win').style.zIndex=highestZ; document.getElementById('sp-warn-win').classList.add('show'); }
+    function proceedPassword() { closeWin('sp-warn-win'); highestZ++; document.getElementById('sp-input-win').style.zIndex=highestZ; document.getElementById('sp-input-win').classList.add('show'); if(currentStep === 11) { currentStep = 12; updateGuide(); } }
+    function savePassword() {
+        let p1 = document.getElementById('sp-p1').value; let p2 = document.getElementById('sp-p2').value;
+        if(p1 === p2 && p1 !== '') { closeWin('sp-input-win'); alert("The password has been set."); if(currentStep === 12) { currentStep = 13; updateGuide(); } } 
+        else { alert("Passwords do not match or are empty."); }
+    }
+
+    // --- Properties Logic ---
+    function switchPropTab(tab) {
+        document.querySelectorAll('.prop-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.prop-body').forEach(b => b.classList.remove('active'));
+        document.getElementById('tab-' + tab).classList.add('active');
+        document.getElementById('body-' + tab).classList.add('active');
+        
+        if(tab === 'mem') {
+            if(currentStep === 18) { currentStep = 19; updateGuide(); }
+            if(currentStep === 16 || currentStep === 17) {
+                userDisabled = document.getElementById('cb-disable').checked;
+                renderUserList();
+                currentStep = 19; updateGuide(); 
             }
         }
     }
 
-    // Password Reset Logic
-    function openSetPasswordWarning() {
-        hideContextMenu();
-        document.getElementById('warn-user').innerText = selectedContextUser;
-        document.getElementById('set-pass-warn-win').classList.add('show');
-        if(currentStep === 10) { currentStep = 11; updateGuide(); }
-    }
-
-    function proceedSetPassword() {
-        closeWin('set-pass-warn-win');
-        document.getElementById('set-pass-input-win').classList.add('show');
-        document.getElementById('sp-pass').focus();
-        if(currentStep === 11) { currentStep = 12; updateGuide(); }
-    }
-
-    function saveNewPassword() {
-        const pass1 = document.getElementById('sp-pass').value;
-        const pass2 = document.getElementById('sp-pass2').value;
-        if(pass1 !== pass2) { alert("Passwords do not match."); return; }
-
-        newUserPass = pass1;
-        alert("The password has been set.");
-        closeWin('set-pass-input-win');
-        if(currentStep === 12) { currentStep = 13; updateGuide(); }
-    }
-
-    // User Properties Logic (Disable & Groups)
-    function openUserProperties(userName) {
-        hideContextMenu();
-        selectedContextUser = userName;
-        document.getElementById('up-title').innerText = userName;
-        document.getElementById('up-disabled').checked = isUserDisabled;
-        
-        switchPropTab('gen');
-        document.getElementById('user-prop-win').classList.add('show');
+    function openProperties() {
+        hideContextMenu(); highestZ++; document.getElementById('prop-win').style.zIndex=highestZ; document.getElementById('prop-win').classList.add('show');
+        switchPropTab('gen'); document.getElementById('cb-disable').checked = userDisabled; renderGroupList();
         
         if(currentStep === 13) { currentStep = 14; updateGuide(); }
+        else if(currentStep === 15) { currentStep = 16; updateGuide(); }
+        else if(currentStep === 17) { currentStep = 18; updateGuide(); }
     }
 
-    function switchPropTab(tab) {
-        document.getElementById('tab-gen').style.display = tab === 'gen' ? 'block' : 'none';
-        document.getElementById('tab-mem').style.display = tab === 'mem' ? 'block' : 'none';
-        document.getElementById('tab-btn-gen').style.background = tab === 'gen' ? '#fff' : 'transparent';
-        document.getElementById('tab-btn-gen').style.borderColor = tab === 'gen' ? '#ccc #ccc #fff #ccc' : 'transparent';
-        document.getElementById('tab-btn-mem').style.background = tab === 'mem' ? '#fff' : 'transparent';
-        document.getElementById('tab-btn-mem').style.borderColor = tab === 'mem' ? '#ccc #ccc #fff #ccc' : 'transparent';
-
-        if(tab === 'mem' && (currentStep === 14 || currentStep === 15)) { currentStep = 15; updateGuide(); }
+    function renderGroupList() {
+        const list = document.getElementById('user-groups-list');
+        list.innerHTML = '';
+        userGroups.forEach(g => { list.innerHTML += `<option>${g}</option>`; });
     }
 
-    function applyUserProps() {
-        isUserDisabled = document.getElementById('up-disabled').checked;
-        const icon = document.getElementById('icon-' + selectedContextUser);
-        if(icon) {
-            if(isUserDisabled) {
-                icon.classList.add('disabled-icon');
-            } else {
-                icon.classList.remove('disabled-icon');
-            }
-        }
+    function saveProperties() {
+        let isDis = document.getElementById('cb-disable').checked;
+        userDisabled = isDis; renderUserList(); 
+        
+        if(currentStep === 14 && isDis) { currentStep = 15; updateGuide(); } 
+        else if (currentStep === 16 && !isDis) { currentStep = 17; updateGuide(); } 
+        else if (currentStep === 21 && userGroups.includes('Administrators')) { currentStep = 22; updateGuide(); } 
+        else if ((currentStep === 16 || currentStep === 17) && !isDis && userGroups.includes('Administrators')) { currentStep = 22; updateGuide(); }
+        
+        closeWin('prop-win');
     }
 
-    function saveUserProps() {
-        applyUserProps();
-        closeWin('user-prop-win');
-        if(currentStep === 18) { currentStep = 19; updateGuide(); }
+    // --- Add Group Logic ---
+    function openAddGroup() { 
+        highestZ++; document.getElementById('add-group-win').style.zIndex=highestZ; document.getElementById('add-group-win').classList.add('show'); 
+        document.getElementById('obj-name-in').value=''; document.getElementById('obj-name-in').style.textDecoration='none'; 
+        if(currentStep === 19) { currentStep = 20; updateGuide(); } 
     }
-
-    // Add Group Logic
-    function openSelectGroup() {
-        document.getElementById('select-group-win').classList.add('show');
-        document.getElementById('group-input').value = '';
-        document.getElementById('group-input').focus();
-        if(currentStep === 15) { currentStep = 16; updateGuide(); }
-    }
-
-    function addGroupToUser() {
-        const val = document.getElementById('group-input').value.trim().toLowerCase();
+    
+    function checkNames() {
+        let val = document.getElementById('obj-name-in').value.trim().toLowerCase();
         if(val === 'administrators' || val === 'admin') {
-            document.getElementById('member-list').innerHTML += `<option>Administrators</option>`;
-            isAdminGroupAdded = true;
-            closeWin('select-group-win');
-            if(currentStep === 16 || currentStep === 17) { currentStep = 18; updateGuide(); }
-        } else {
-            alert("Name not found. Please type 'Administrators'.");
-        }
+            document.getElementById('obj-name-in').value = 'Administrators';
+            document.getElementById('obj-name-in').style.textDecoration = 'underline';
+        } else { alert("Name not found. Type 'Administrators' for this lab."); }
+    }
+
+    function confirmAddGroup() {
+        let val = document.getElementById('obj-name-in').value;
+        if(val.includes('Administrators')) {
+            if(!userGroups.includes('Administrators')) userGroups.push('Administrators');
+            renderGroupList(); closeWin('add-group-win');
+            if(currentStep === 20) { currentStep = 21; updateGuide(); }
+        } else { closeWin('add-group-win'); }
     }
 
     // Initialize
     updateGuide();
-
 </script>
 </body>
 </html>
