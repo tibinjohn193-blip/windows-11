@@ -31,7 +31,7 @@ Click on any lab below to start the interactive simulation:
 * **[🛠️ LAB 14 — Configuring Windows Defender Firewall & Inbound Rules](lab14.md)**
 
 ### 🏆 Capstone Assessment
-* **[🎓 Windows 11 Master Exam Simulator](exam.html)** — *A final challenge combining Disk Management, IP Configuration, User Creation, Sharing, Firewall, and BitLocker into a single lab with no step-by-step guidance!*
+* **[🎓 Windows 11 Master Exam Simulator](https://tibinjohn193-blip.github.io/windows-11/exam.html)** — *A final challenge combining Disk Management, IP Configuration, User Creation, Sharing, Firewall, and BitLocker into a single lab with no step-by-step guidance!*
 
 ## 💻 How to Use
 1. Clone this repository or download the ZIP file.
