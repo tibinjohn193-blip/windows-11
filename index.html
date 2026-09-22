@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windows 11 Study Labs - Interactive Simulations</title>
+    <style>
+        :root {
+            --win-bg: url('https://images.unsplash.com/photo-1617471346061-5d329ab9c574?q=80&w=1920&auto=format&fit=crop');
+            --accent: #0067C0;
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.5);
+        }
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--win-bg) no-repeat center center fixed;
+            background-size: cover;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px; margin: 40px auto;
+            background: var(--glass-bg);
+            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px; padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .header { text-align: center; margin-bottom: 40px; }
+        .header h1 { font-size: 38px; color: #003399; margin-bottom: 15px; font-weight: 600;}
+        .header p { font-size: 16px; color: #444; max-width: 800px; margin: 0 auto 15px auto; line-height: 1.6;}
+        
+        .features {
+            display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin-bottom: 30px;
+        }
+        .feature-badge {
+            background: #e8f5e9; color: #2e7d32; padding: 8px 15px; border-radius: 20px; 
+            font-size: 13px; font-weight: bold; border: 1px solid #a5d6a7;
+        }
+
+        .lab-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;
+        }
+
+        .lab-card {
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid #ddd; border-radius: 10px; padding: 25px;
+            transition: all 0.3s ease; display: flex; flex-direction: column;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .lab-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 20px rgba(0, 103, 192, 0.15);
+            border-color: var(--accent);
+        }
+
+        .card-icon { font-size: 32px; margin-bottom: 15px; }
+        .card-title { font-size: 16px; font-weight: bold; color: #111; margin-bottom: 10px; line-height: 1.4;}
+        
+        .btn-launch {
+            display: block; text-align: center; padding: 12px 15px; margin-top: auto;
+            background: var(--accent); color: white; text-decoration: none;
+            border-radius: 5px; font-size: 14px; font-weight: 500; transition: 0.2s;
+        }
+        .btn-launch:hover { background: #005a9e; }
+
+        /* Exam Card Highlight */
+        .exam-card { background: linear-gradient(135deg, #e3f2fd, #bbdefb); border-color: #90caf9;}
+        .exam-card .btn-launch { background: #003399; font-size: 15px; font-weight: bold;}
+        .exam-card .btn-launch:hover { background: #002266; }
+
+        footer { 
+            text-align: center; margin-top: 50px; padding-top: 20px; 
+            border-top: 1px solid rgba(0,0,0,0.1); font-size: 14px; color: #555; 
+        }
+        
+        .target-audience {
+            background: rgba(0, 103, 192, 0.05); border-radius: 10px; padding: 20px; margin-top: 40px; text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>🪟 Windows 11 Study Labs</h1>
+        <p>Interactive, browser-based simulations of common Windows 11 Pro setup and administration tasks. Built for learning and practice — no VM, no ISO, no risk to a real machine.</p>
+        
+        <div class="features">
+            <span class="feature-badge">🚫 Zero Setup Required</span>
+            <span class="feature-badge">🛡️ 100% Risk-Free</span>
+            <span class="feature-badge">💻 Highly Realistic UI</span>
+            <span class="feature-badge">🌐 Runs in Browser</span>
+        </div>
+        <p style="font-weight: bold; color: #0067C0; margin-top: 20px;">Select any lab below to start the interactive simulation:</p>
+    </div>
+
+    <div class="lab-grid">
+        
+        <div class="lab-card">
+            <div class="card-icon">🛠️</div>
+            <div class="card-title">LAB 1 — Bootable USB with Rufus</div>
+            <a href="lab1.md" class="btn-launch">Launch Lab 1</a>
+        </div>
+
+        <div class="lab-card">
+            <div class="card-icon">🛠️</div>
+            <div class="card-title">LAB 2 — Windows 11 Pro Setup (Offline Account)</div>
+            <a href="lab2.md" class="btn-launch">Launch Lab 2</a>
+        </div>
+
+        <div class="lab-card">
+            <div class="card-icon">🛠️</div>
+            <div class="card-title">LAB 3 — Creating System Restore Point</div>
+            <a href="lab3.md" class="btn-launch">Launch Lab 3</a>
+        </div>
+
+        <div class="lab-card">
+            <div class="card-icon">🛠️</div>
+            <div class="card-title">LAB 4 — Restore Windows 11 OS using Restore Point</div>
+            <a href="lab4.md" class="btn-launch">Launch Lab 4</a>
+        </div>
+
+        <div class="lab-card">
+            <div class="card-icon">🛠️</div>
+            <div class="card-title">LAB 5 — Windows 11 Disk Management</div>
+            <a href="lab5.md" class="btn-launch">Launch Lab 5</a>
+        </div>
+
+        <div class="lab-card">
+            <div class="card-icon">🛠️</div>
+            <div class="card-title">LAB 6 — IP Configuration & ICMP Inspection</div>
+            <a href="lab6.md" class="btn-launch">Launch Lab 6</a>
+        </div>
+
+        <div class="lab-card">
+            <div class="card-icon">🛠️</div>
+            <div class="card-title">LAB 7 — Windows 11 Remote Desktop Connection</div>
+            <a href="lab7.md" class="btn-launch">Launch Lab 7</a>
+        </div>
+
+        <div class="lab-card">
+            <div class="card-icon">🛠️</div>
+            <div class="card-title">LAB 8 — Local User Management (lusrmgr.msc)</div>
+            <a href="lab8.md" class="btn-launch">Launch Lab 8</a>
+        </div>
+
+        <div class="lab-card">
+            <div class="card-icon">🛠️</div>
+            <div class="card-title">LAB 9 — Local User Management (using CMD)</div>
+            <a href="lab9.md" class="btn-launch">Launch Lab 9</a>
+        </div>
+
+        <div class="lab-card">
+            <div class="card-icon">🛠️</div>
+            <div class="card-title">LAB 10 — Network Folder Sharing & Permissions</div>
+            <a href="lab10.md" class="btn-launch">Launch Lab 10</a>
+        </div>
+
+        <div class="lab-card">
+            <div class="card-icon">🛠️</div>
+            <div class="card-title">LAB 11 — Malicious Software Removal Tool Scan</div>
+            <a href="lab11.md" class="btn-launch">Launch Lab 11</a>
+        </div>
+
+        <div class="lab-card">
+            <div class="card-icon">🛠️</div>
+            <div class="card-title">LAB 12 — BitLocker Encryption & Password Unlock</div>
+            <a href="lab12.md" class="btn-launch">Launch Lab 12</a>
+        </div>
+
+        <div class="lab-card">
+            <div class="card-icon">🛠️</div>
+            <div class="card-title">LAB 13 — Recovering a Locked BitLocker Drive</div>
+            <a href="lab13.md" class="btn-launch">Launch Lab 13</a>
+        </div>
+
+        <div class="lab-card">
+            <div class="card-icon">🛠️</div>
+            <div class="card-title">LAB 14 — Configuring Windows Defender Firewall</div>
+            <a href="lab14.md" class="btn-launch">Launch Lab 14</a>
+        </div>
+
+        <!-- Capstone Assessment -->
+        <div class="lab-card exam-card" style="grid-column: 1 / -1;">
+            <div class="card-icon">🏆</div>
+            <div class="card-title" style="font-size: 20px;">Capstone Assessment: Windows 11 Master Exam Simulator</div>
+            <p style="font-size: 14px; margin-bottom: 20px; color: #333;">A final challenge combining Disk Management, IP Configuration, User Creation, Sharing, Firewall, and BitLocker into a single lab with no step-by-step guidance!</p>
+            <a href="https://tibinjohn193-blip.github.io/windows-11/exam.html)" class="btn-launch">Start Exam Simulator</a>
+        </div>
+
+    </div>
+
+    <div class="target-audience">
+        <h3 style="margin-top:0; color:#003399;">🎯 Target Audience</h3>
+        <p style="margin: 0; color: #444;">IT & Desktop Support Trainees • CompTIA A+ / System Administration Learners • Cybersecurity Enthusiasts</p>
+    </div>
+
+    <footer>
+        <p>Built for educational purposes. Runs entirely locally in your web browser using pure HTML, CSS, and JavaScript.</p>
+    </footer>
+</div>
+
+</body>
+</html>
