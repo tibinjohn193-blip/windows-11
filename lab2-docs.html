@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab 2: Windows 11 Pro Installation & Offline Setup</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --primary: #0067C0;
+            --text-main: #2c3e50;
+            --text-muted: #546e7a;
+            --border-radius: 10px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.7;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.2rem;
+            letter-spacing: 0.5px;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .container {
+            max-width: 850px;
+            margin: 40px auto;
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+
+        h2 {
+            color: var(--primary);
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-top: 35px;
+            font-size: 1.4rem;
+        }
+
+        .intro-text {
+            font-size: 1.1rem;
+            color: var(--text-main);
+            background-color: #f8f9fa;
+            padding: 15px 20px;
+            border-left: 4px solid var(--primary);
+            border-radius: 4px;
+            margin-bottom: 30px;
+        }
+
+        ul, ol {
+            color: var(--text-muted);
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 10px;
+        }
+
+        strong {
+            color: var(--text-main);
+        }
+
+        code {
+            background: #e0e0e0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #d84315;
+            font-weight: bold;
+        }
+
+        .requirements-box {
+            background: #fff4e5;
+            border-left: 5px solid #ff9800;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 40px;
+            margin-bottom: 30px;
+        }
+
+        .requirements-box h3 {
+            margin-top: 0;
+            color: #e65100;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .requirements-box ul {
+            margin: 0;
+        }
+
+        .action-area {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+        }
+
+        .btn-primary {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            border: 2px solid #28a745;
+            font-size: 1.2rem;
+            padding: 15px 40px;
+            border-radius: 6px;
+            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: #218838;
+            border-color: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(40, 167, 69, 0.4);
+        }
+        
+        .back-btn {
+            display: inline-block;
+            margin-top: 20px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: 0.2s;
+        }
+        
+        .back-btn:hover {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Lab 2: Windows 11 Pro Installation & Offline Setup</h1>
+        <p>End-to-End Installation and BIOS Boot Configuration</p>
+    </header>
+
+    <div class="container">
+        
+        <div class="intro-text">
+            Welcome to <strong>Lab 2</strong>. This lab walks through the full, end-to-end Windows 11 Pro installation experience on physical hardware, bridging the gap between firmware configuration and the final operating system setup.
+        </div>
+
+        <h2>🎯 Lab Objectives</h2>
+        <ul>
+            <li><strong>Pre-Installation & BIOS Navigation:</strong> Master physical hardware handoff by configuring boot order via the motherboard BIOS/UEFI boot menu.</li>
+            <li><strong>USB Boot Media Handling:</strong> Properly identify and boot from a physical USB installation medium (Kingston DataTraveler 3.0).</li>
+            <li><strong>Disk Partition Management:</strong> Navigate disk selection, partition formatting, deletion, and creating new allocations.</li>
+            <li><strong>OOBE & Local Account Configuration:</strong> Bypass forced Microsoft account requirements using the offline ("I don't have internet") workaround in Windows 11 Pro.</li>
+        </ul>
+
+        <h2>🔌 Phase 1: Boot Menu Selection & USB Connection</h2>
+        <p>Before Windows Setup launches, technicians must handle physical hardware handoff. This lab simulates that exact pre-installation sequence:</p>
+        <ol>
+            <li><strong>Connect USB Drive:</strong> Plug the bootable USB (e.g., <em>Kingston DataTraveler 3.0, 32GB</em>) into the target PC. The system confirms detection of a valid Windows 11 boot image.</li>
+            <li><strong>Restart & POST:</strong> Trigger a system reboot into the motherboard manufacturer's POST (Power-On Self-Test) screen.</li>
+            <li><strong>Access Boot Menu:</strong> Press the manufacturer-specific hotkey (<code>F12</code>, <code>F11</code>, <code>F9</code>, <code>Esc</code>, or <code>Del</code>) during the memory test prompt to open the <strong>BIOS Boot Menu</strong>.</li>
+            <li><strong>Select Boot Device:</strong> Choose <code>UEFI: Kingston DataTraveler 3.0 PMAP</code> from the blue-screen device list. Selecting incorrect items (like local Windows Boot Manager or network boot) correctly simulates hardware rejection.</li>
+            <li><strong>USB Hand-off:</strong> Observe the <code>Booting from UEFI...</code> status message transitioning directly into the Windows Setup installer.</li>
+        </ol>
+
+        <h2>🖥️ Phase 2: Windows Setup & Partition Management</h2>
+        <p>Once booted into the installer:</p>
+        <ul>
+            <li><strong>Language & Region:</strong> Select your preferred language, time/currency format, and keyboard layout.</li>
+            <li><strong>Setup Activation:</strong> Click <strong>Install Now</strong> and input your product key (or select "I don't have a product key" for evaluation/later activation).</li>
+            <li><strong>Edition Selection:</strong> Choose <strong>Windows 11 Pro</strong>.</li>
+            <li><strong>Disk Partitioning:</strong>
+                <ul>
+                    <li>View existing partitions on the target drive.</li>
+                    <li>Practice <strong>Delete</strong>, <strong>Format</strong>, and <strong>New</strong> partition allocations.</li>
+                    <li>Select the unallocated space or primary partition to begin file copying.</li>
+                </ul>
+            </li>
+            <li><strong>Installation Progress:</strong> Watch the automated progress screen handle <em>Copying Windows files</em>, <em>Getting files ready for installation</em>, <em>Installing features</em>, <em>Installing updates</em>, and <em>Finishing up</em>.</li>
+        </ul>
+
+        <h2>👤 Phase 3: Out-of-Box Experience (OOBE) & Local Account Setup</h2>
+        <p>Following the post-installation reboot, you enter the Windows 11 OOBE phase:</p>
+        <ul>
+            <li>Select your region, keyboard layout, and PC name.</li>
+            <li>When prompted to connect to a network for Microsoft account sign-in, use the <strong>Offline Workaround</strong>:
+                <ul>
+                    <li>Select <strong>"I don't have internet"</strong>.</li>
+                    <li>Choose <strong>"Continue with limited setup"</strong>.</li>
+                </ul>
+            </li>
+            <li>Create a secure <strong>Local User Account</strong> (Username and Password) instead of being forced to link a cloud Microsoft account.</li>
+            <li>Configure privacy settings (telemetry, location, diagnostics) to complete the setup and drop into the Windows 11 Pro desktop.</li>
+        </ul>
+
+        <div class="requirements-box">
+            <h3>🛠️ Requirements & Troubleshooting</h3>
+            <ul>
+                <li><strong>Media:</strong> USB flash drive (minimum 8GB, formatted with Rufus or official Media Creation Tool).</li>
+                <li><strong>Firmware:</strong> UEFI mode enabled with Secure Boot compatible hardware profile.</li>
+                <li><strong>Common Pitfall:</strong> If the PC boots directly into the existing OS instead of the USB, verify your motherboard's boot menu key (<code>F12</code> is common on Dell/Intel, <code>F11</code> on MSI/ASRock, <code>F8</code> on ASUS).</li>
+            </ul>
+        </div>
+
+        <div class="action-area">
+            <p>Ready to put this into practice? Open the interactive simulation below.</p>
+            <a href="https://tibinjohn193-blip.github.io/windows-11/lab%202%20win11-pro-offline-setup-simulation%281%29.html" class="btn-primary" target="_blank">▶ Open Lab 2 Simulation</a>
+            <br>
+            <a href="index.html" class="back-btn">← Back to Lab Dashboard</a>
+        </div>
+
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab 6: Configuring Static IPs & Network Connectivity</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --primary: #0067C0;
+            --text-main: #2c3e50;
+            --text-muted: #546e7a;
+            --border-radius: 10px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.7;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.2rem;
+            letter-spacing: 0.5px;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+
+        h2 {
+            color: var(--primary);
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-top: 35px;
+            font-size: 1.4rem;
+        }
+
+        h3 {
+            color: #333;
+            margin-top: 25px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .intro-text {
+            font-size: 1.1rem;
+            color: var(--text-main);
+            background-color: #f8f9fa;
+            padding: 15px 20px;
+            border-left: 4px solid var(--primary);
+            border-radius: 4px;
+            margin-bottom: 30px;
+        }
+
+        ul, ol {
+            color: var(--text-muted);
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        strong {
+            color: var(--text-main);
+        }
+
+        code, kbd {
+            background: #e0e0e0;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #d84315;
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+
+        kbd {
+            background: #333;
+            color: #fff;
+            border-radius: 3px;
+            border-bottom: 2px solid #111;
+        }
+
+        /* Network Topology Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .info-box {
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            background: #fafafa;
+            text-align: center;
+        }
+
+        .info-box.pc1 { border-top: 4px solid #0078D7; }
+        .info-box.pc2 { border-top: 4px solid #E8B04D; }
+
+        .info-box h4 {
+            margin: 0 0 10px 0;
+            font-size: 1.2rem;
+            color: #333;
+        }
+        
+        .ip-badge {
+            display: inline-block;
+            background: #e5f1fb;
+            color: #0067C0;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-family: monospace;
+            font-weight: bold;
+            font-size: 1.1rem;
+            border: 1px solid #cce4f7;
+        }
+
+        .subnet-info {
+            text-align: center;
+            background: #f1f8ff;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+            font-family: monospace;
+            color: #555;
+            border: 1px dashed #ccc;
+        }
+
+        /* Step highlight */
+        .step-block {
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 25px;
+            margin-top: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+
+        .step-block ol > li {
+            font-weight: bold;
+            color: #333;
+            margin-top: 15px;
+        }
+
+        .step-block ol ul {
+            margin-top: 5px;
+            list-style-type: disc;
+        }
+
+        .step-block ol ul li {
+            font-weight: normal;
+            color: var(--text-muted);
+        }
+
+        .action-area {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+        }
+
+        .btn-primary {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            border: 2px solid #28a745;
+            font-size: 1.2rem;
+            padding: 15px 40px;
+            border-radius: 6px;
+            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: #218838;
+            border-color: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(40, 167, 69, 0.4);
+        }
+        
+        .back-btn {
+            display: inline-block;
+            margin-top: 20px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: 0.2s;
+        }
+        
+        .back-btn:hover {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .info-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Lab 6: Static IPs & Network Connectivity</h1>
+        <p>Configuring IPv4 settings and verifying communication</p>
+    </header>
+
+    <div class="container">
+        
+        <div class="intro-text">
+            This lab guides you through the process of manually assigning a static IP address to your computer using the Windows Network Connections control panel (<code>ncpa.cpl</code>). After configuring the IP, you will test connectivity to a second PC on the network.
+        </div>
+
+        <h2>🖥️ Lab Topology</h2>
+        <p>To ensure proper communication without IP conflicts, each device must have a unique address on the same network segment:</p>
+        
+        <div class="info-grid">
+            <div class="info-box pc1">
+                <h4>💻 PC 1 (Your Machine)</h4>
+                <div class="ip-badge">192.168.1.1</div>
+            </div>
+            
+            <div class="info-box pc2">
+                <h4>💻 PC 2 (Target Machine)</h4>
+                <div class="ip-badge">192.168.1.2</div>
+            </div>
+        </div>
+        <div class="subnet-info">
+            <strong>Common Subnet Mask:</strong> 255.255.255.0
+        </div>
+
+        <h2>🎯 Lab Objectives</h2>
+        <ul>
+            <li>Use the <code>ncpa.cpl</code> shortcut to quickly access Network Connections.</li>
+            <li>Configure a static IPv4 address and Subnet Mask via the Windows GUI.</li>
+            <li>Verify the new IP configuration using Command Prompt.</li>
+            <li>Use ICMP <code>ping</code> to verify communication with a second PC.</li>
+        </ul>
+
+        <h2>📋 Step-by-Step Instructions</h2>
+
+        <div class="step-block">
+            <h3>🔹 Part 1: Configure PC1 (Your Machine)</h3>
+            <ol>
+                <li>Open Network Connections:
+                    <ul>
+                        <li>Press <kbd>Windows Key</kbd> + <kbd>R</kbd> on your keyboard to open the Run dialog box.</li>
+                        <li>Type <code>ncpa.cpl</code> and press <strong>Enter</strong>.</li>
+                    </ul>
+                </li>
+                <li>Access Adapter Properties:
+                    <ul>
+                        <li>Right-click on your active network adapter (usually named <strong>Ethernet</strong> or <strong>Wi-Fi</strong>) and select <strong>Properties</strong>.</li>
+                    </ul>
+                </li>
+                <li>Open IPv4 Settings:
+                    <ul>
+                        <li>In the list of items, locate and click on <strong>Internet Protocol Version 4 (TCP/IPv4)</strong> to highlight it.</li>
+                        <li>Click the <strong>Properties</strong> button below the list.</li>
+                    </ul>
+                </li>
+                <li>Enter the IP Details:
+                    <ul>
+                        <li>Select the radio button for <strong>"Use the following IP address"</strong>.</li>
+                        <li><strong>IP address:</strong> Enter <code>192.168.1.1</code></li>
+                        <li><strong>Subnet mask:</strong> Enter <code>255.255.255.0</code> (this usually auto-fills when you click the box).</li>
+                        <li>Leave the Default Gateway blank for this local-only lab.</li>
+                    </ul>
+                </li>
+                <li>Save Changes:
+                    <ul>
+                        <li>Click <strong>OK</strong> on the IPv4 properties window, then click <strong>Close</strong> on the Ethernet properties window to apply the settings.</li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+
+        <div class="step-block" style="background-color: #fffaf0;">
+            <h3>🔹 Part 2: Configure PC2 (Target Machine)</h3>
+            <ol>
+                <li>Open Network Connections:
+                    <ul>
+                        <li>Press <kbd>Windows Key</kbd> + <kbd>R</kbd> on the second computer.</li>
+                        <li>Type <code>ncpa.cpl</code> and press <strong>Enter</strong>.</li>
+                    </ul>
+                </li>
+                <li>Access Adapter Properties:
+                    <ul>
+                        <li>Right-click the active network adapter and select <strong>Properties</strong>.</li>
+                    </ul>
+                </li>
+                <li>Open IPv4 Settings:
+                    <ul>
+                        <li>Highlight <strong>Internet Protocol Version 4 (TCP/IPv4)</strong> and click <strong>Properties</strong>.</li>
+                    </ul>
+                </li>
+                <li>Enter the IP Details:
+                    <ul>
+                        <li>Select <strong>"Use the following IP address"</strong>.</li>
+                        <li><strong>IP address:</strong> Enter <code>192.168.1.2</code></li>
+                        <li><strong>Subnet mask:</strong> Enter <code>255.255.255.0</code></li>
+                        <li>Leave the Default Gateway blank.</li>
+                    </ul>
+                </li>
+                <li>Save Changes:
+                    <ul>
+                        <li>Click <strong>OK</strong>, then <strong>Close</strong> to apply.</li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+
+        <div class="step-block" style="background-color: #f4fbff; border-color: #cce4f7;">
+            <h3>🔹 Part 3: Verify and Ping (From PC1 to PC2)</h3>
+            <ol>
+                <li>Open Command Prompt:
+                    <ul>
+                        <li>On PC1, press <kbd>Windows Key</kbd> + <kbd>R</kbd>, type <code>cmd</code>, and press <strong>Enter</strong>.</li>
+                    </ul>
+                </li>
+                <li>Ping the Second PC:
+                    <ul>
+                        <li>Type <code>ping 192.168.1.2</code> and press <strong>Enter</strong>.</li>
+                    </ul>
+                </li>
+                <li>Analyze the Results:
+                    <ul>
+                        <li>If the configuration is correct, you will see <code>Reply from 192.168.1.2</code> along with a <code>0% loss</code> statistic, indicating the two PCs are successfully talking to each other.</li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+
+        <div class="action-area">
+            <p>Test out your skills and run through the exact configuration steps in the interactive simulation below:</p>
+            <a href="https://tibinjohn193-blip.github.io/windows-11/lab6.html" class="btn-primary" target="_blank">▶ Access Lab 6 Simulation</a>
+            <br>
+            <a href="index.html" class="back-btn">← Back to Lab Dashboard</a>
+        </div>
+
+    </div>
+
+</body>
+</html>

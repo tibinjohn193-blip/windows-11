@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab 1: Booting Windows 11 Pro to USB</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --primary: #0067C0;
+            --text-main: #2c3e50;
+            --text-muted: #546e7a;
+            --border-radius: 10px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.7;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.2rem;
+            letter-spacing: 0.5px;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+
+        h2 {
+            color: var(--primary);
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-top: 30px;
+        }
+
+        .requirements-box {
+            background: #eef5fa;
+            border-left: 5px solid var(--primary);
+            padding: 15px 20px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+        }
+
+        .requirements-box h3 {
+            margin-top: 0;
+            color: var(--primary);
+        }
+
+        .requirements-box ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .requirements-box li {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        p {
+            font-size: 1.05rem;
+            color: var(--text-muted);
+        }
+
+        .link-section {
+            background: #fafafa;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .link-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: all 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .action-area {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+        }
+
+        .btn-primary {
+            background-color: #28a745;
+            color: white;
+            border: 2px solid #28a745;
+            font-size: 1.2rem;
+            padding: 15px 40px;
+            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-primary:hover {
+            background-color: #218838;
+            border-color: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(40, 167, 69, 0.4);
+        }
+        
+        .back-btn {
+            display: inline-block;
+            margin-top: 20px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        
+        .back-btn:hover {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Lab 1: Booting Windows 11 Pro to USB</h1>
+        <p>Creating a Bootable Pendrive</p>
+    </header>
+
+    <div class="container">
+        
+        <p>This lab demonstrates the process of using Rufus to write a Windows 11 ISO onto a USB flash drive to create a bootable installation media.</p>
+
+        <div class="requirements-box">
+            <h3>📌 Requirements</h3>
+            <ul>
+                <li>Rufus Software</li>
+                <li>Windows 11 Pro ISO File</li>
+                <li>USB Flash Drive (8GB or larger recommended)</li>
+            </ul>
+        </div>
+
+        <h2>Step 1: Download Rufus</h2>
+        <div class="link-section">
+            <p>Rufus is a free, open-source Windows utility for creating bootable USB drives — most commonly used to put an operating system installer (like Windows or a Linux distro) onto a USB flash drive so you can boot from it and install the OS.</p>
+            <a href="https://rufus.ie/en/" target="_blank" class="btn btn-outline">📥 Download Rufus</a>
+        </div>
+
+        <h2>Step 2: Download Windows 11 ISO</h2>
+        <div class="link-section">
+            <p>You will need the official or customized Windows 11 Pro ISO image file to write to your USB drive.</p>
+            <a href="https://getintopc.com/?s=windows+11" target="_blank" class="btn btn-outline">📥 Download Windows 11 Pro ISO</a>
+        </div>
+
+        <div class="action-area">
+            <p>Ready to see how it works? Open the interactive simulation below.</p>
+            <a href="https://tibinjohn193-blip.github.io/windows-11/lab%201%20rufus-win11-usb-simulation.html" class="btn btn-primary">▶ Open Lab 1 Simulation</a>
+            <br>
+            <a href="index.html" class="back-btn">← Back to Lab Dashboard</a>
+        </div>
+
+    </div>
+
+</body>
+</html>

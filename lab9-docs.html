@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab 9: Windows 11 User Management via Command Line (CMD)</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --primary: #0067C0;
+            --text-main: #2c3e50;
+            --text-muted: #546e7a;
+            --border-radius: 10px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.7;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.2rem;
+            letter-spacing: 0.5px;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+
+        h2 {
+            color: var(--primary);
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-top: 35px;
+            font-size: 1.4rem;
+        }
+
+        h3 {
+            color: #333;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .intro-text {
+            font-size: 1.1rem;
+            color: var(--text-main);
+            background-color: #f8f9fa;
+            padding: 15px 20px;
+            border-left: 4px solid var(--primary);
+            border-radius: 4px;
+            margin-bottom: 30px;
+        }
+
+        ul, ol {
+            color: var(--text-muted);
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        strong {
+            color: var(--text-main);
+        }
+
+        code, kbd {
+            background: #e0e0e0;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #d84315;
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+
+        /* CLI Terminal Styling */
+        .cmd-box {
+            background-color: #0c0c0c;
+            color: #cccccc;
+            font-family: Consolas, "Courier New", monospace;
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            border: 1px solid #333;
+            font-size: 1rem;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+        }
+
+        .cmd-prompt {
+            color: #cccccc;
+        }
+
+        .cmd-command {
+            color: #ffffff;
+            font-weight: bold;
+        }
+
+        .action-text {
+            background: #e5f1fb;
+            border-left: 3px solid #0078D7;
+            padding: 10px 15px;
+            border-radius: 0 4px 4px 0;
+            color: #333;
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+        }
+
+        .action-text i {
+            color: #555;
+            display: block;
+            margin-top: 5px;
+            font-size: 0.9rem;
+        }
+
+        /* Step highlight */
+        .step-block {
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 25px;
+            margin-top: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+
+        .action-area {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+        }
+
+        .btn-primary {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            border: 2px solid #28a745;
+            font-size: 1.2rem;
+            padding: 15px 40px;
+            border-radius: 6px;
+            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: #218838;
+            border-color: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(40, 167, 69, 0.4);
+        }
+        
+        .back-btn {
+            display: inline-block;
+            margin-top: 20px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: 0.2s;
+        }
+        
+        .back-btn:hover {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Lab 9: Command Line User Management</h1>
+        <p>Manage Windows local accounts entirely via CMD</p>
+    </header>
+
+    <div class="container">
+        
+        <div class="intro-text">
+            <strong>📖 What is Command-Line User Management?</strong><br>
+            While Windows provides graphical tools like <code>lusrmgr.msc</code> and the Settings app to manage users, system administrators often prefer the command line for its speed and automation capabilities. The built-in <code>net</code> command allows administrators to quickly execute user management tasks, which is especially useful when writing deployment scripts or managing servers remotely.
+        </div>
+
+        <h2>🎯 Lab Objectives</h2>
+        <ul>
+            <li>Launch the Command Prompt with Administrator privileges.</li>
+            <li>Create a new local user account with a predefined password.</li>
+            <li>View detailed account properties and status.</li>
+            <li>Reset a user's password securely.</li>
+            <li>Disable and re-enable a user account.</li>
+            <li>Elevate a standard user to the Administrators group.</li>
+            <li>Delete a user account from the system.</li>
+        </ul>
+
+        <h2>📋 Step-by-Step Lab Instructions</h2>
+        <p>Follow these commands within the simulator's Administrator Command Prompt to complete the lab:</p>
+
+        <div class="step-block" style="border-left: 4px solid #333;">
+            <h3>1. Launch Command Prompt as Administrator</h3>
+            <ul>
+                <li>Click the <strong>Start Menu (🪟)</strong>.</li>
+                <li>Type <code>cmd</code> in the search box.</li>
+                <li>On the right side of the search results, click <strong>🛡️ Run as administrator</strong>.</li>
+            </ul>
+        </div>
+
+        <h3>2. Create a New User Account</h3>
+        <div class="cmd-box">
+            <span class="cmd-prompt">C:\Windows\system32&gt;</span> <span class="cmd-command">net user User1 123 /add</span>
+        </div>
+        <div class="action-text">
+            <strong>Action:</strong> Creates a new local account named "User1" with the password "123".
+        </div>
+
+        <h3>3. View User Properties</h3>
+        <div class="cmd-box">
+            <span class="cmd-prompt">C:\Windows\system32&gt;</span> <span class="cmd-command">net user User1</span>
+        </div>
+        <div class="action-text">
+            <strong>Action:</strong> Displays the account's details, including whether the account is active and its group memberships.
+        </div>
+
+        <h3>4. Reset the User's Password</h3>
+        <div class="cmd-box">
+            <span class="cmd-prompt">C:\Windows\system32&gt;</span> <span class="cmd-command">net user User1 456</span>
+        </div>
+        <div class="action-text">
+            <strong>Action:</strong> Instantly changes User1's password to "456".
+        </div>
+
+        <h3>5. Disable the User Account</h3>
+        <div class="cmd-box">
+            <span class="cmd-prompt">C:\Windows\system32&gt;</span> <span class="cmd-command">net user User1 /active:no</span>
+        </div>
+        <div class="action-text">
+            <strong>Action:</strong> Disables the account, preventing the user from logging in.
+            <i>💡 Tip: Run <code>net user User1</code> again to verify the "Account active" status now says "No".</i>
+        </div>
+
+        <h3>6. Re-Enable the User Account</h3>
+        <div class="cmd-box">
+            <span class="cmd-prompt">C:\Windows\system32&gt;</span> <span class="cmd-command">net user User1 /active:yes</span>
+        </div>
+        <div class="action-text">
+            <strong>Action:</strong> Reactivates the account.
+        </div>
+
+        <h3>7. Grant Administrator Privileges</h3>
+        <div class="cmd-box">
+            <span class="cmd-prompt">C:\Windows\system32&gt;</span> <span class="cmd-command">net localgroup Administrators User1 /add</span>
+        </div>
+        <div class="action-text">
+            <strong>Action:</strong> Adds User1 to the local Administrators group.
+            <i>💡 Tip: Run <code>net user User1</code> to verify "*Administrators" appears under Local Group Memberships.</i>
+        </div>
+
+        <h3>8. Delete the User Account</h3>
+        <div class="cmd-box">
+            <span class="cmd-prompt">C:\Windows\system32&gt;</span> <span class="cmd-command">net user User1 /delete</span>
+        </div>
+        <div class="action-text">
+            <strong>Action:</strong> Permanently removes User1 from the system.
+        </div>
+
+        <h3>9. Verify Deletion</h3>
+        <div class="cmd-box">
+            <span class="cmd-prompt">C:\Windows\system32&gt;</span> <span class="cmd-command">net user</span>
+        </div>
+        <div class="action-text">
+            <strong>Action:</strong> Lists all current user accounts on the PC. Verify that User1 is no longer listed.
+        </div>
+
+        <div class="action-area">
+            <p>Test out your skills and run through the exact configuration steps in the interactive simulation below:</p>
+            <a href="https://tibinjohn193-blip.github.io/windows-11/lab9..html" class="btn-primary" target="_blank">▶ Access Lab 9 Simulation</a>
+            <br>
+            <a href="index.html" class="back-btn">← Back to Lab Dashboard</a>
+        </div>
+
+    </div>
+
+</body>
+</html>

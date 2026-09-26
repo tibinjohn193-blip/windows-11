@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab 4: Windows System Restore</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --primary: #0067C0;
+            --text-main: #2c3e50;
+            --text-muted: #546e7a;
+            --border-radius: 10px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.7;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.2rem;
+            letter-spacing: 0.5px;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .container {
+            max-width: 850px;
+            margin: 40px auto;
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+
+        h2 {
+            color: var(--primary);
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-top: 35px;
+            font-size: 1.4rem;
+        }
+
+        h3 {
+            color: #333;
+            margin-top: 25px;
+            margin-bottom: 10px;
+        }
+
+        .intro-text {
+            font-size: 1.1rem;
+            color: var(--text-main);
+            background-color: #f8f9fa;
+            padding: 15px 20px;
+            border-left: 4px solid var(--primary);
+            border-radius: 4px;
+            margin-bottom: 30px;
+        }
+
+        ul, ol {
+            color: var(--text-muted);
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 10px;
+        }
+
+        strong {
+            color: var(--text-main);
+        }
+
+        code, kbd {
+            background: #e0e0e0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #d84315;
+            font-weight: bold;
+        }
+
+        .warning-box {
+            background: #fff8e1;
+            border-left: 5px solid #ffc107;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+            margin-bottom: 30px;
+        }
+
+        .warning-box p {
+            margin: 0;
+            color: #5d4037;
+        }
+
+        /* Step highlight */
+        .step-block {
+            background: #fafafa;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 20px 25px;
+            margin-top: 20px;
+        }
+
+        .step-block ul {
+            list-style-type: none;
+            padding-left: 0;
+            margin-top: 10px;
+        }
+        
+        .step-block ul li {
+            margin-bottom: 8px;
+            padding-left: 15px;
+            position: relative;
+        }
+
+        .step-block ul li::before {
+            content: "•";
+            color: var(--primary);
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+
+        .action-area {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+        }
+
+        .btn-primary {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            border: 2px solid #28a745;
+            font-size: 1.2rem;
+            padding: 15px 40px;
+            border-radius: 6px;
+            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: #218838;
+            border-color: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(40, 167, 69, 0.4);
+        }
+        
+        .back-btn {
+            display: inline-block;
+            margin-top: 20px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: 0.2s;
+        }
+        
+        .back-btn:hover {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Lab 4: System Restore Process</h1>
+        <p>Recover Windows using a saved Restore Point</p>
+    </header>
+
+    <div class="container">
+        
+        <div class="intro-text">
+            <strong>System Restore</strong> is a Windows recovery tool designed to fix issues by reverting your computer's software and settings back to a previous, working state. It works by taking a "snapshot" (called a Restore Point) of your core system files, Windows Registry, and installed programs at a specific moment in time.
+        </div>
+
+        <h2>🛠️ Primary Uses</h2>
+        <ul>
+            <li><strong>Undoing Bad Updates:</strong> If a new Windows update or hardware driver causes your computer to crash or run poorly, System Restore rolls back those changes.</li>
+            <li><strong>Removing Problematic Software:</strong> If a recently installed application corrupts your system settings or causes instability, reverting to a restore point undoes the installation.</li>
+            <li><strong>Fixing Unexplained Errors:</strong> When your system starts behaving erratically and you cannot pinpoint the cause, jumping back to a date when everything worked is often the fastest fix.</li>
+        </ul>
+
+        <div class="warning-box">
+            <p><strong>⚠️ Important Note:</strong> System Restore only affects system files, installed applications, and registry settings. It is completely safe for your personal data—it will not delete, alter, or recover your personal documents, photos, videos, or emails.</p>
+        </div>
+
+        <h2>📋 Step-by-Step Restoration Process</h2>
+        <p>Follow this sequence to perform a System Restore (based on the lab simulation):</p>
+        
+        <div class="step-block">
+            <h3>1. Access the Recovery Environment</h3>
+            <ul>
+                <li><strong>Action:</strong> From the Windows interface, hold down the <kbd>Shift</kbd> key on your keyboard, click the <strong>Power</strong> icon, and select <strong>Restart</strong>. Continue holding <kbd>Shift</kbd> until the system reboots.</li>
+                <li><strong>Verification:</strong> Your computer will boot into a blue screen titled "Choose an option" instead of your normal desktop.</li>
+            </ul>
+
+            <h3>2. Navigate to System Restore</h3>
+            <ul>
+                <li><strong>Action:</strong> On the blue WinRE screen, click <strong>Troubleshoot</strong>, then click <strong>Advanced options</strong>, and finally select <strong>System Restore</strong>.</li>
+                <li><strong>Verification:</strong> The screen will prompt you to choose an account to continue.</li>
+            </ul>
+
+            <h3>3. Authenticate Your Account</h3>
+            <ul>
+                <li><strong>Action:</strong> Click on your administrator account name (e.g., "admin"), enter your password (in our system <code>123</code> is the password), and click <strong>Continue</strong>.</li>
+                <li><strong>Verification:</strong> The classic white "System Restore" wizard window will open on your screen.</li>
+            </ul>
+
+            <h3>4. Select the Restore Point</h3>
+            <ul>
+                <li><strong>Action:</strong> Click <strong>Next</strong> on the welcome screen. Click on the specific restore point you want to use (such as your manual "smec" point) to highlight it in blue, then click <strong>Next</strong>.</li>
+                <li><strong>Verification:</strong> You chose the correct one if the date, time, and description match your target on the final "Confirm your restore point" screen.</li>
+            </ul>
+
+            <h3>5. Start the Restoration</h3>
+            <ul>
+                <li><strong>Action:</strong> Click <strong>Finish</strong>, and then click <strong>Yes</strong> on the final warning popup (the process cannot be interrupted).</li>
+                <li><strong>Verification:</strong> A progress bar will appear showing initialization and file restoration, followed by an automatic system restart.</li>
+            </ul>
+        </div>
+
+        <div class="action-area">
+            <p>Ready to practice? Open the interactive simulation below.</p>
+            <a href="https://tibinjohn193-blip.github.io/windows-11/LAB%204%20restore%20os%20using%20ytem%20restore%20point%20%20.html" class="btn-primary" target="_blank">▶ Open Lab 4 Simulation</a>
+            <br>
+            <a href="index.html" class="back-btn">← Back to Lab Dashboard</a>
+        </div>
+
+    </div>
+
+</body>
+</html>

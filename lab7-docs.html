@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab 7: Windows 11 Remote Desktop Connection (RDP)</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --primary: #0067C0;
+            --text-main: #2c3e50;
+            --text-muted: #546e7a;
+            --border-radius: 10px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.7;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.2rem;
+            letter-spacing: 0.5px;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+
+        h2 {
+            color: var(--primary);
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-top: 35px;
+            font-size: 1.4rem;
+        }
+
+        h3 {
+            color: #333;
+            margin-top: 25px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .intro-text {
+            font-size: 1.1rem;
+            color: var(--text-main);
+            background-color: #f8f9fa;
+            padding: 15px 20px;
+            border-left: 4px solid var(--primary);
+            border-radius: 4px;
+            margin-bottom: 30px;
+        }
+
+        ul, ol {
+            color: var(--text-muted);
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        strong {
+            color: var(--text-main);
+        }
+
+        code, kbd {
+            background: #e0e0e0;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #d84315;
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+
+        kbd {
+            background: #333;
+            color: #fff;
+            border-radius: 3px;
+            border-bottom: 2px solid #111;
+        }
+        
+        .port-badge {
+            background: #ffe0b2;
+            color: #e65100;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            margin-left: 5px;
+            border: 1px solid #ffcc80;
+        }
+
+        /* Network Topology Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+            margin-bottom: 30px;
+        }
+
+        .info-box {
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            background: #fafafa;
+        }
+
+        .info-box.pc1 { border-top: 4px solid #e81123; } /* Red for Host */
+        .info-box.pc2 { border-top: 4px solid #0078D7; } /* Blue for Client */
+
+        .info-box h4 {
+            margin: 0 0 15px 0;
+            font-size: 1.2rem;
+            color: #333;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+        
+        .cred-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .cred-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+
+        .ip-badge {
+            display: inline-block;
+            background: #e5f1fb;
+            color: #0067C0;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-weight: bold;
+        }
+
+        /* Step highlight */
+        .step-block {
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 25px;
+            margin-top: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+
+        .step-block ol > li {
+            color: var(--text-muted);
+            margin-top: 10px;
+        }
+
+        .action-area {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+        }
+
+        .btn-primary {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            border: 2px solid #28a745;
+            font-size: 1.2rem;
+            padding: 15px 40px;
+            border-radius: 6px;
+            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: #218838;
+            border-color: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(40, 167, 69, 0.4);
+        }
+        
+        .back-btn {
+            display: inline-block;
+            margin-top: 20px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: 0.2s;
+        }
+        
+        .back-btn:hover {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .info-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Lab 7: Windows 11 Remote Desktop (RDP)</h1>
+        <p>Configure and establish remote connections over a network</p>
+    </header>
+
+    <div class="container">
+        
+        <div class="intro-text">
+            <strong>Remote Desktop Protocol (RDP)</strong> is a built-in Windows feature that allows you to connect to and control a PC from another device over a network or the internet. It operates by default on <strong style="color:#d32f2f;">TCP Port 3389</strong>. When you connect via RDP, you see the remote computer's screen on your local monitor and can use your own keyboard and mouse to control it, exactly as if you were sitting directly in front of it.
+        </div>
+
+        <h2>🖥️ Lab Scenario & Topology</h2>
+        <p>In this simulation, you will manage two Windows 11 machines on the same local network. <strong>Goal:</strong> Successfully connect <em>from</em> PC2 <em>to</em> PC1 using Remote Desktop.</p>
+        
+        <div class="info-grid">
+            <div class="info-box pc1">
+                <h4>🗄️ PC 1 (The Host / Target)</h4>
+                <ul class="cred-list">
+                    <li><span>IP Address:</span> <span class="ip-badge">192.168.1.1</span></li>
+                    <li><span>RDP Port:</span> <code>3389</code> <span class="port-badge">TCP</span></li>
+                    <li><span>Username:</span> <code>PC1</code></li>
+                    <li><span>Password:</span> <code>1234</code></li>
+                </ul>
+            </div>
+            
+            <div class="info-box pc2">
+                <h4>💻 PC 2 (The Client)</h4>
+                <ul class="cred-list">
+                    <li><span>IP Address:</span> <span class="ip-badge">192.168.1.2</span></li>
+                    <li><span>Role:</span> <span>Connecting machine</span></li>
+                    <li><span>Status:</span> <span>Ready</span></li>
+                </ul>
+            </div>
+        </div>
+
+        <h2>📋 Step-by-Step Lab Instructions</h2>
+        <p>Follow these steps within the simulator to complete the lab:</p>
+
+        <div class="step-block" style="border-left: 4px solid #e81123;">
+            <h3>🔹 Part 1: Verify Connectivity (On PC1)</h3>
+            <p>Before attempting a remote connection, you must ensure the two computers can talk to each other.</p>
+            <ol>
+                <li>Make sure you are viewing <strong>PC1</strong>.</li>
+                <li>Click the <strong>Start Menu (🪟)</strong> and open <strong>Command Prompt (⬛)</strong>.</li>
+                <li>Type <code>ping 192.168.1.2</code> and press <strong>Enter</strong> to verify PC1 can reach PC2.</li>
+                <li>Close the Command Prompt.</li>
+            </ol>
+        </div>
+
+        <div class="step-block" style="border-left: 4px solid #e81123;">
+            <h3>🔹 Part 2: Enable Remote Desktop (On PC1)</h3>
+            <p>By default, Windows blocks incoming Remote Desktop connections for security reasons. You must enable it on the target machine.</p>
+            <ol>
+                <li>Click the <strong>Start Menu (🪟)</strong> and open <strong>Settings (⚙️)</strong>.</li>
+                <li>In the Settings search bar, type <code>Remote</code> and select <strong>Remote Desktop settings</strong>.</li>
+                <li>Toggle the <strong>Remote Desktop</strong> switch to <strong>On</strong>. PC1 is now listening for incoming connections on Port 3389 <em>(Windows automatically creates a firewall rule for this port)</em>.</li>
+            </ol>
+        </div>
+
+        <div class="step-block" style="border-left: 4px solid #0078D7;">
+            <h3>🔹 Part 3: Enable Remote Desktop (On PC2)</h3>
+            <ol>
+                <li>Use the toggle button at the top of the screen to switch to <strong>View PC2 (192.168.1.2)</strong>.</li>
+                <li>Open <strong>Settings (⚙️)</strong> from the Start Menu.</li>
+                <li>Search for Remote Desktop and toggle it <strong>On</strong> for PC2 as well.</li>
+            </ol>
+        </div>
+
+        <div class="step-block" style="border-left: 4px solid #0078D7; background-color: #f4fbff;">
+            <h3>🔹 Part 4: Initiate the Connection (From PC2 to PC1)</h3>
+            <p>Now that both machines are configured, you will launch the RDP client on PC2.</p>
+            <ol>
+                <li>Click the <strong>Start Menu (🪟)</strong> and click the <strong>Run (🏃)</strong> app (This simulates pressing <kbd>Win</kbd> + <kbd>R</kbd>).</li>
+                <li>In the Run dialog box, type <code>mstsc</code> (Microsoft Terminal Services Client) and click <strong>OK</strong>.</li>
+                <li>The Remote Desktop Connection window will open. Enter PC1's IP address: <code>192.168.1.1</code> and click <strong>Connect</strong>. <em>(Note: You can also specify the port like this: 192.168.1.1:3389, though it is not required for the default port)</em>.</li>
+            </ol>
+        </div>
+
+        <div class="step-block" style="border-left: 4px solid #4CAF50; background-color: #f0fdf4;">
+            <h3>🔹 Part 5: Authentication & Security</h3>
+            <ol>
+                <li>A Windows Security prompt will appear asking for credentials.</li>
+                <li>Enter the target PC's credentials:
+                    <ul>
+                        <li><strong>Username:</strong> <code>PC1</code></li>
+                        <li><strong>Password:</strong> <code>1234</code></li>
+                    </ul>
+                </li>
+                <li>Click <strong>OK</strong>.</li>
+                <li>You will see a security warning stating that the identity of the remote computer cannot be verified. Click <strong>Yes</strong> to accept the certificate and connect.</li>
+                <li><strong>Success!</strong> You will now see PC1's screen operating inside a window on PC2.</li>
+            </ol>
+        </div>
+
+        <div class="action-area">
+            <p>Test out your skills and run through the exact configuration steps in the interactive simulation below:</p>
+            <a href="https://tibinjohn193-blip.github.io/windows-11/lab7.html" class="btn-primary" target="_blank">▶ Access Lab 7 Simulation</a>
+            <br>
+            <a href="index.html" class="back-btn">← Back to Lab Dashboard</a>
+        </div>
+
+    </div>
+
+</body>
+</html>

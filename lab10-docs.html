@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab 10: Windows 11 Network Folder Sharing & Permissions (GUI)</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --primary: #0067C0;
+            --text-main: #2c3e50;
+            --text-muted: #546e7a;
+            --border-radius: 10px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.7;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.2rem;
+            letter-spacing: 0.5px;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+
+        h2 {
+            color: var(--primary);
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-top: 35px;
+            font-size: 1.4rem;
+        }
+
+        h3 {
+            color: #333;
+            margin-top: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .intro-text {
+            font-size: 1.1rem;
+            color: var(--text-main);
+            background-color: #f8f9fa;
+            padding: 15px 20px;
+            border-left: 4px solid var(--primary);
+            border-radius: 4px;
+            margin-bottom: 30px;
+        }
+
+        ul, ol {
+            color: var(--text-muted);
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        strong {
+            color: var(--text-main);
+        }
+
+        code, kbd {
+            background: #e0e0e0;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #d84315;
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+
+        /* Network Topology Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+            margin-bottom: 30px;
+        }
+
+        .info-box {
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            background: #fafafa;
+        }
+
+        .info-box.pc1 { border-top: 4px solid #e81123; } /* Red for Host */
+        .info-box.pc2 { border-top: 4px solid #0078D7; } /* Blue for Client */
+
+        .info-box h4 {
+            margin: 0 0 15px 0;
+            font-size: 1.2rem;
+            color: #333;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+        
+        .cred-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .cred-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+
+        .ip-badge {
+            display: inline-block;
+            background: #e5f1fb;
+            color: #0067C0;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-weight: bold;
+        }
+
+        /* Step highlight */
+        .step-block {
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 25px;
+            margin-top: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+
+        .step-block ol > li {
+            color: var(--text-muted);
+            margin-top: 10px;
+        }
+
+        .action-area {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+        }
+
+        .btn-primary {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            border: 2px solid #28a745;
+            font-size: 1.2rem;
+            padding: 15px 40px;
+            border-radius: 6px;
+            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: #218838;
+            border-color: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(40, 167, 69, 0.4);
+        }
+        
+        .back-btn {
+            display: inline-block;
+            margin-top: 20px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: 0.2s;
+        }
+        
+        .back-btn:hover {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .info-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Lab 10: Network Folder Sharing & Permissions</h1>
+        <p>Configure Advanced Sharing and NTFS Security via GUI</p>
+    </header>
+
+    <div class="container">
+        
+        <div class="intro-text">
+            <strong>📖 Overview:</strong><br>
+            In a Windows network environment, simply clicking "Share" is often not enough. System administrators must configure <strong>Advanced Sharing</strong> to expose the folder to the network, and then configure <strong>Security Permissions (NTFS)</strong> to define exactly who can read, write, or execute files within that folder. This lab walks you through this exact two-step process.
+        </div>
+
+        <h2>🖥️ Lab Scenario & Topology</h2>
+        <p>In this simulation, you will manage two Windows 11 machines on the same local network. <strong>Goal:</strong> Create a folder named <code>SharedData</code> on PC1, share it with full permissions for everyone, and access it remotely from PC2 using its UNC path.</p>
+        
+        <div class="info-grid">
+            <div class="info-box pc1">
+                <h4>🗄️ PC 1 (The Host)</h4>
+                <ul class="cred-list">
+                    <li><span>IP Address:</span> <span class="ip-badge">192.168.1.1</span></li>
+                    <li><span>Username:</span> <code>PC1</code></li>
+                    <li><span>Password:</span> <code>123</code></li>
+                </ul>
+            </div>
+            
+            <div class="info-box pc2">
+                <h4>💻 PC 2 (The Client)</h4>
+                <ul class="cred-list">
+                    <li><span>IP Address:</span> <span class="ip-badge">192.168.1.2</span></li>
+                    <li><span>Role:</span> <span>Accessing machine</span></li>
+                    <li><span>Status:</span> <span>Ready</span></li>
+                </ul>
+            </div>
+        </div>
+
+        <h2>📋 Step-by-Step Lab Instructions</h2>
+        <p>Follow these steps within the simulator to complete the lab:</p>
+
+        <div class="step-block" style="border-left: 4px solid #e81123;">
+            <h3>🔹 Part 1: Verify Connectivity & Create Folder (On PC1)</h3>
+            <ol>
+                <li>Open <strong>Command Prompt</strong> from the Start menu and type <code>ping 192.168.1.2</code> to ensure PC1 can communicate with PC2.</li>
+                <li>Open <strong>File Explorer</strong> and navigate to <strong>Local Disk (C:)</strong>.</li>
+                <li>Right-click the empty space, select <strong>New &gt; Folder</strong>, and rename it exactly to <code>SharedData</code>.</li>
+            </ol>
+        </div>
+
+        <div class="step-block" style="border-left: 4px solid #e81123;">
+            <h3>🔹 Part 2: Configure Advanced Sharing (On PC1)</h3>
+            <ol>
+                <li>Right-click the <code>SharedData</code> folder and select <strong>Properties</strong>.</li>
+                <li>Go to the <strong>Sharing</strong> tab and click <strong>Advanced Sharing...</strong>.</li>
+                <li>Check <strong>Share this folder</strong> and click <strong>Permissions</strong>.</li>
+                <li>Check the <strong>Full Control</strong> box under Allow.</li>
+                <li>Click <strong>Apply</strong>, then <strong>OK</strong>, and click <strong>OK</strong> again to close the Advanced Sharing dialog.</li>
+            </ol>
+        </div>
+
+        <div class="step-block" style="border-left: 4px solid #e81123;">
+            <h3>🔹 Part 3: Configure NTFS Security Permissions (On PC1)</h3>
+            <ol>
+                <li>In the folder Properties window, switch to the <strong>Security</strong> tab and click <strong>Edit...</strong>.</li>
+                <li>Click <strong>Add...</strong>, type <code>Everyone</code> in the object names box, and click <strong>OK</strong>.</li>
+                <li>Select <strong>Everyone</strong> from the list, and check <strong>Full control</strong> under Allow.</li>
+                <li>Click <strong>Apply</strong>, then <strong>OK</strong>, and finally <strong>OK</strong> on the main Properties window.</li>
+            </ol>
+        </div>
+
+        <div class="step-block" style="border-left: 4px solid #0078D7; background-color: #f4fbff;">
+            <h3>🔹 Part 4: Access the Shared Folder (From PC2)</h3>
+            <ol>
+                <li>Use the top toggle button to switch to <strong>View PC2</strong>.</li>
+                <li>Click <strong>Start</strong>, search for the <strong>Run</strong> app, and open it.</li>
+                <li>Type the UNC path of the host machine: <code>\\192.168.1.1</code> and click <strong>OK</strong>.</li>
+                <li>When prompted by Windows Security, enter PC1's network credentials (Username: <code>PC1</code>, Password: <code>123</code>).</li>
+                <li><strong>Success!</strong> File Explorer will open displaying the shared <code>SharedData</code> folder over the network.</li>
+            </ol>
+        </div>
+
+        <div class="action-area">
+            <p>Test out your skills and run through the exact configuration steps in the interactive simulation below:</p>
+            <a href="https://tibinjohn193-blip.github.io/windows-11/lab10.html" class="btn-primary" target="_blank">▶ Access Lab 10 Simulation</a>
+            <br>
+            <a href="index.html" class="back-btn">← Back to Lab Dashboard</a>
+        </div>
+
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab 14: Windows 11 Advanced Firewall Management</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --primary: #0067C0;
+            --text-main: #2c3e50;
+            --text-muted: #546e7a;
+            --border-radius: 10px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.7;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.2rem;
+            letter-spacing: 0.5px;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+
+        h2 {
+            color: var(--primary);
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-top: 35px;
+            font-size: 1.4rem;
+        }
+
+        h3 {
+            color: #333;
+            margin-top: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .intro-text {
+            font-size: 1.1rem;
+            color: var(--text-main);
+            background-color: #f8f9fa;
+            padding: 15px 20px;
+            border-left: 4px solid var(--primary);
+            border-radius: 4px;
+            margin-bottom: 30px;
+        }
+
+        ul, ol {
+            color: var(--text-muted);
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        strong {
+            color: var(--text-main);
+        }
+
+        code, kbd {
+            background: #e0e0e0;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #d84315;
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+
+        /* Firewall Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+            margin-bottom: 30px;
+        }
+
+        .info-box {
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            background: #fafafa;
+        }
+
+        .info-box.basic { border-top: 4px solid #FF9800; }
+        .info-box.advanced { border-top: 4px solid #0067C0; }
+
+        .info-box h4 {
+            margin: 0 0 10px 0;
+            font-size: 1.2rem;
+            color: #333;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+        
+        .info-box p {
+            font-size: 0.95rem;
+            color: #555;
+            margin-bottom: 0;
+        }
+
+        /* Step highlight */
+        .step-block {
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 25px;
+            margin-top: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+
+        .step-block ol > li {
+            color: var(--text-muted);
+            margin-top: 10px;
+        }
+
+        .action-area {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+        }
+
+        .btn-primary {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            border: 2px solid #28a745;
+            font-size: 1.2rem;
+            padding: 15px 40px;
+            border-radius: 6px;
+            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: #218838;
+            border-color: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(40, 167, 69, 0.4);
+        }
+        
+        .back-btn {
+            display: inline-block;
+            margin-top: 20px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: 0.2s;
+        }
+        
+        .back-btn:hover {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Lab 14: Advanced Firewall Management</h1>
+        <p>Control network traffic using Inbound and Outbound rules</p>
+    </header>
+
+    <div class="container">
+        
+        <div class="intro-text">
+            <strong>🛡️ Overview:</strong><br>
+            Windows provides a two-tiered approach to managing network security. In this lab, you will act as a System Administrator who needs to disable the basic firewall but block a specific developer port (TCP 8080) from incoming network traffic.
+        </div>
+
+        <div class="info-grid">
+            <div class="info-box basic">
+                <h4>🛡️ Control Panel (<code>firewall.cpl</code>)</h4>
+                <p>Used for basic tasks like turning the firewall completely on/off for Private, Public, or Domain networks, and allowing basic apps through the firewall.</p>
+            </div>
+            
+            <div class="info-box advanced">
+                <h4>⚙️ Advanced Security (<code>wf.msc</code>)</h4>
+                <p>Used by System Administrators to create highly granular rules (Inbound/Outbound) based on programs, ports, protocols (TCP/UDP), and IP addresses.</p>
+            </div>
+        </div>
+
+        <h2>🎯 Lab Objectives</h2>
+        <ul>
+            <li>Launch firewall tools directly using Windows Run commands.</li>
+            <li>Turn off Windows Defender Firewall for both Private and Public network profiles.</li>
+            <li>Navigate the Windows Defender Firewall with Advanced Security MMC snap-in.</li>
+            <li>Create a custom <strong>Inbound Rule</strong> to block incoming connections.</li>
+            <li>Filter traffic specifically for the <strong>TCP protocol</strong> on <strong>Port 8080</strong>.</li>
+        </ul>
+
+        <h2>📋 Step-by-Step Lab Instructions</h2>
+        <p>Follow these steps within the interactive simulator to complete the lab:</p>
+
+        <div class="step-block" style="border-left: 4px solid #FF9800; background-color: #fffaf0;">
+            <h3>🔹 Part 1: Turn Off Basic Firewall (<code>firewall.cpl</code>)</h3>
+            <ol>
+                <li>Click the <strong>Start Menu (🪟)</strong>, search for <code>run</code>, and open the <strong>Run</strong> application.</li>
+                <li>Type <code>firewall.cpl</code> and click <strong>OK</strong> to open the Control Panel Firewall settings.</li>
+                <li>On the left pane, click <strong>Turn Windows Defender Firewall on or off</strong>.</li>
+                <li>Select <strong>Turn off Windows Defender Firewall</strong> under both the <strong>Private</strong> and <strong>Public</strong> network settings.</li>
+                <li>Click <strong>OK</strong>. Notice the firewall status changes to red (❌).</li>
+            </ol>
+        </div>
+
+        <div class="step-block" style="border-left: 4px solid #0078D7; background-color: #f4fbff;">
+            <h3>🔹 Part 2: Block a Specific Port using Advanced Security</h3>
+            <ol>
+                <li>From the left menu in the Control Panel, click <strong>Advanced settings</strong> to open the Advanced Security console (<code>wf.msc</code>).</li>
+                <li>In the left pane, click on <strong>📥 Inbound Rules</strong>.</li>
+                <li>In the Actions pane on the far right, click <strong>New Rule...</strong> to open the Rule Wizard.</li>
+                <li><strong>Rule Type:</strong> Select <strong>Port</strong> (to control connections for a TCP/UDP port) and click <strong>Next</strong>.</li>
+                <li><strong>Protocol and Ports:</strong> Select <strong>TCP</strong>, choose <strong>Specific local ports</strong>, type <code>8080</code>, and click <strong>Next</strong>.</li>
+                <li><strong>Action:</strong> Select <strong>Block the connection</strong> and click <strong>Next</strong>.</li>
+                <li><strong>Profile:</strong> Ensure all profiles (Domain, Private, Public) are checked and click <strong>Next</strong>.</li>
+                <li><strong>Name:</strong> Type <code>Block Port 8080</code> in the Name field and click <strong>Finish</strong>.</li>
+                <li>Verify that the new blocking rule (🚫) appears at the top of the Inbound Rules list.</li>
+            </ol>
+        </div>
+
+        <div class="action-area">
+            <p>Test out your skills and run through the exact configuration steps in the interactive simulation below:</p>
+            <a href="https://tibinjohn193-blip.github.io/windows-11/lab14.html" class="btn-primary" target="_blank">▶ Access Lab 14 Simulation</a>
+            <br>
+            <a href="index.html" class="back-btn">← Back to Lab Dashboard</a>
+        </div>
+
+    </div>
+
+</body>
+</html>

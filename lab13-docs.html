@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab 13: Windows 11 BitLocker Recovery Key Unlock</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --primary: #0067C0;
+            --text-main: #2c3e50;
+            --text-muted: #546e7a;
+            --border-radius: 10px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.7;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.2rem;
+            letter-spacing: 0.5px;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+
+        h2 {
+            color: var(--primary);
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-top: 35px;
+            font-size: 1.4rem;
+        }
+
+        h3 {
+            color: #333;
+            margin-top: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .intro-text {
+            font-size: 1.1rem;
+            color: var(--text-main);
+            background-color: #f8f9fa;
+            padding: 15px 20px;
+            border-left: 4px solid var(--primary);
+            border-radius: 4px;
+            margin-bottom: 30px;
+        }
+
+        ul, ol {
+            color: var(--text-muted);
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        strong {
+            color: var(--text-main);
+        }
+
+        code, kbd {
+            background: #e0e0e0;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #d84315;
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+
+        /* Scenario Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+            margin-bottom: 30px;
+        }
+
+        .info-box {
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            background: #fafafa;
+            text-align: center;
+        }
+
+        .info-box.target { border-top: 4px solid #e81123; }
+        .info-box.problem { border-top: 4px solid #FF9800; }
+        .info-box.solution { border-top: 4px solid #4CAF50; }
+
+        .info-box h4 {
+            margin: 0 0 10px 0;
+            font-size: 1.1rem;
+            color: #333;
+        }
+
+        .info-box .detail {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #0067C0;
+            margin-top: 10px;
+        }
+        
+        .info-box .sub-detail {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        /* Step highlight */
+        .step-block {
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 25px;
+            margin-top: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+
+        .step-block ol > li {
+            color: var(--text-muted);
+            margin-top: 10px;
+        }
+
+        .action-area {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+        }
+
+        .btn-primary {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            border: 2px solid #28a745;
+            font-size: 1.2rem;
+            padding: 15px 40px;
+            border-radius: 6px;
+            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: #218838;
+            border-color: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(40, 167, 69, 0.4);
+        }
+        
+        .back-btn {
+            display: inline-block;
+            margin-top: 20px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: 0.2s;
+        }
+        
+        .back-btn:hover {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Lab 13: BitLocker Recovery Key Unlock</h1>
+        <p>Regain access to an encrypted drive using a saved recovery key</p>
+    </header>
+
+    <div class="container">
+        
+        <div class="intro-text">
+            <strong>🔑 What is a BitLocker Recovery Key?</strong><br>
+            A BitLocker recovery key is a unique 48-digit numerical password that can be used to unlock your system if BitLocker is unable to confirm for certain that the attempt to access the system drive is authorized, or if the user forgets their standard password.
+        </div>
+
+        <h2>📌 Key Concepts Covered in this Lab</h2>
+        <ul>
+            <li><strong>Disaster Recovery:</strong> Simulating a forgotten password scenario on a locked fixed data drive.</li>
+            <li><strong>Alternative Authentication:</strong> Using the "More options" UI in Windows 11 to switch from password authentication to Recovery Key authentication.</li>
+            <li><strong>Key Management:</strong> Accessing a previously backed-up <code>.txt</code> file containing the BitLocker Identifier and Recovery Key.</li>
+            <li><strong>Decryption Post-Recovery:</strong> Accessing the Control Panel to turn off BitLocker after successfully recovering access to the drive.</li>
+        </ul>
+
+        <h2>🖥️ Lab Scenario</h2>
+        <div class="info-grid">
+            <div class="info-box target">
+                <h4>🎯 Target Drive</h4>
+                <div class="detail">Data (D:)</div>
+                <div class="sub-detail">Currently encrypted & <strong style="color:#e81123;">LOCKED</strong></div>
+            </div>
+            
+            <div class="info-box problem">
+                <h4>⚠️ Problem</h4>
+                <div class="detail">Forgotten Password</div>
+                <div class="sub-detail">You forgot the password (<code>123</code>)</div>
+            </div>
+
+            <div class="info-box solution">
+                <h4>💡 Solution</h4>
+                <div class="detail">Use Recovery Key</div>
+                <div class="sub-detail">Retrieve from Backup (E:)</div>
+            </div>
+        </div>
+
+        <h2>📋 Step-by-Step Lab Instructions</h2>
+        <p>Follow these steps within the interactive simulator to complete the recovery mission:</p>
+
+        <div class="step-block" style="border-left: 4px solid #e81123; background-color: #fff0f1;">
+            <h3>🔹 Part 1: Encounter the Locked Drive</h3>
+            <ol>
+                <li>Open <strong>File Explorer</strong> from the taskbar.</li>
+                <li>Double-click the <strong>Locked Data (D:)</strong> drive. The password prompt will appear.</li>
+                <li>Since you forgot the password, click <strong>More options</strong> at the bottom of the prompt.</li>
+                <li>Click <strong>Enter recovery key</strong> to switch the authentication mode.</li>
+            </ol>
+        </div>
+
+        <div class="step-block" style="border-left: 4px solid #0078D7; background-color: #f4fbff;">
+            <h3>🔹 Part 2: Retrieve the Recovery Key</h3>
+            <ol>
+                <li>Leave the prompt open and navigate to the <strong>Backup (E:)</strong> drive using the left sidebar in File Explorer.</li>
+                <li>Double-click the text file named <strong>BitLocker Recovery Key 4F8A29.txt</strong> to open it in Notepad.</li>
+                <li>Highlight the 48-digit Recovery Key at the bottom of the document and click <strong>Copy Key to Clipboard</strong>.</li>
+                <li>The key will automatically paste into the BitLocker unlock prompt. Click <strong>Unlock</strong>.</li>
+            </ol>
+        </div>
+
+        <div class="step-block" style="border-left: 4px solid #4CAF50; background-color: #f0fdf4;">
+            <h3>🔹 Part 3: Manage and Disable BitLocker</h3>
+            <ol>
+                <li>The drive is now unlocked (🔓)! Right-click the <strong>Data (D:)</strong> drive and select <strong>Manage BitLocker</strong>.</li>
+                <li>The Control Panel will open, showing the full suite of BitLocker settings.</li>
+                <li>Click <strong>Turn off BitLocker</strong> at the bottom of the options list.</li>
+                <li>Confirm your choice by clicking <strong>Turn off BitLocker</strong> in the dialog box. The drive will begin decrypting.</li>
+            </ol>
+        </div>
+
+        <div class="action-area">
+            <p>Test your disaster recovery skills in the interactive simulation below:</p>
+            <a href="https://tibinjohn193-blip.github.io/windows-11/lab13.html" class="btn-primary" target="_blank">▶ Access Lab 13 Simulation</a>
+            <br>
+            <a href="index.html" class="back-btn">← Back to Lab Dashboard</a>
+        </div>
+
+    </div>
+
+</body>
+</html>

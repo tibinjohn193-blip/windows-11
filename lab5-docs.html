@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab 5: Windows 11 Disk Management</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --primary: #0067C0;
+            --text-main: #2c3e50;
+            --text-muted: #546e7a;
+            --border-radius: 10px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.7;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.2rem;
+            letter-spacing: 0.5px;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .container {
+            max-width: 950px;
+            margin: 40px auto;
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+
+        h2 {
+            color: var(--primary);
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-top: 35px;
+            font-size: 1.4rem;
+        }
+
+        .intro-text {
+            font-size: 1.1rem;
+            color: var(--text-main);
+            background-color: #f8f9fa;
+            padding: 15px 20px;
+            border-left: 4px solid var(--primary);
+            border-radius: 4px;
+            margin-bottom: 30px;
+        }
+
+        ul {
+            color: var(--text-muted);
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        strong {
+            color: var(--text-main);
+        }
+
+        code, kbd {
+            background: #e0e0e0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #d84315;
+            font-weight: bold;
+        }
+
+        /* 2-Column Grid for Partition Styles */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+            margin-bottom: 30px;
+        }
+
+        .info-box {
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+
+        .info-box.legacy {
+            background-color: #fff9e6;
+            border-left: 5px solid #ffb300;
+        }
+
+        .info-box.modern {
+            background-color: #e8f4fd;
+            border-left: 5px solid #0067C0;
+        }
+
+        .info-box h3 {
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.2rem;
+            color: #333;
+        }
+
+        /* 3-Column Grid for File Systems */
+        .fs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+            margin-bottom: 30px;
+        }
+
+        .fs-card {
+            background: #fafafa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            border-top: 4px solid #4CAF50;
+        }
+
+        .fs-card:nth-child(2) { border-top-color: #FF9800; }
+        .fs-card:nth-child(3) { border-top-color: #9C27B0; }
+
+        .fs-card h3 {
+            margin-top: 0;
+            color: var(--primary);
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+        }
+
+        /* Step highlight */
+        .step-block {
+            background: #fafafa;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 20px 25px;
+            margin-top: 20px;
+        }
+
+        .action-area {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+        }
+
+        .btn-primary {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            border: 2px solid #28a745;
+            font-size: 1.2rem;
+            padding: 15px 40px;
+            border-radius: 6px;
+            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: #218838;
+            border-color: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(40, 167, 69, 0.4);
+        }
+        
+        .back-btn {
+            display: inline-block;
+            margin-top: 20px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: 0.2s;
+        }
+        
+        .back-btn:hover {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .info-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Lab 5: Windows 11 Disk Management</h1>
+        <p>Partition Styles, File Systems, and Volume Configuration</p>
+    </header>
+
+    <div class="container">
+        
+        <div class="intro-text">
+            <strong>📚 Core Concepts:</strong> When managing disks in Windows, understanding how the drive is initialized (Partition Style) and formatted (File System) is crucial. This simulation helps visualize the actions that take place on top of these foundational concepts.
+        </div>
+
+        <h2>1. Partition Styles: MBR vs. GPT</h2>
+        <p>Before a disk can be formatted, it must be initialized with a partition style that tells Windows how data is organized on the drive.</p>
+        
+        <div class="info-grid">
+            <div class="info-box legacy">
+                <h3>💾 MBR (Master Boot Record)</h3>
+                <p>The older, legacy standard.</p>
+                <ul>
+                    <li><strong>Limitations:</strong> Only supports disk sizes up to <strong>2 TB</strong>.</li>
+                    <li><strong>Partitions:</strong> Supports a maximum of only <strong>4 Primary Partitions</strong>. If more are needed, one must be converted into an "Extended Partition" to hold "Logical Drives."</li>
+                </ul>
+            </div>
+            
+            <div class="info-box modern">
+                <h3>🚀 GPT (GUID Partition Table)</h3>
+                <p>The modern standard (Required for Windows 11 and UEFI).</p>
+                <ul>
+                    <li><strong>Advantages:</strong> Supports massive disk sizes (up to 18 Exabytes).</li>
+                    <li><strong>Partitions:</strong> Supports up to <strong>128 Primary Partitions</strong> natively in Windows.</li>
+                    <li>More resilient to data corruption as it stores multiple copies of the partition data across the disk.</li>
+                </ul>
+            </div>
+        </div>
+
+        <h2>2. Windows File Systems</h2>
+        <p>Once a partition is created, it must be formatted with a File System to store data.</p>
+        
+        <div class="fs-grid">
+            <div class="fs-card">
+                <h3>📁 NTFS</h3>
+                <p><strong>New Technology File System</strong></p>
+                <ul>
+                    <li>The default and preferred file system for modern Windows internal drives.</li>
+                    <li><strong>Features:</strong> Supports huge file sizes and partition sizes.</li>
+                    <li>Includes advanced security features like file/folder-level permissions, encryption (EFS), compression, and journaling (data recovery after crashes).</li>
+                </ul>
+            </div>
+            
+            <div class="fs-card">
+                <h3>💾 FAT32</h3>
+                <p><strong>File Allocation Table 32</strong></p>
+                <ul>
+                    <li>A legacy file system heavily used for USB flash drives and SD cards due to universal compatibility (Windows, macOS, Linux, Consoles).</li>
+                    <li><strong>Limitations:</strong> The maximum file size you can store is <strong>4 GB</strong>.</li>
+                    <li>Windows limits formatting FAT32 partitions to a maximum of 32 GB.</li>
+                </ul>
+            </div>
+
+            <div class="fs-card">
+                <h3>⚡ exFAT</h3>
+                <p><strong>Extended FAT</strong></p>
+                <ul>
+                    <li>Created by Microsoft specifically for flash drives to bridge the gap between FAT32 and NTFS.</li>
+                    <li><strong>Features:</strong> Removes the 4 GB file size limit of FAT32.</li>
+                    <li>Maintains excellent cross-platform compatibility (macOS and Windows) without the heavy overhead of NTFS.</li>
+                </ul>
+            </div>
+        </div>
+
+        <h2>💽 Windows 11 Disk Management Simulation</h2>
+        <p>An interactive, browser-based simulation of the Windows 11 Disk Management utility (<code>diskmgmt.msc</code>). This project allows users to safely practice disk provisioning without modifying physical hardware.</p>
+        
+        <div class="step-block">
+            <h3>🚀 Features Demonstrated in this Simulation</h3>
+            <ul>
+                <li><strong>Shrink Volume:</strong> Safely reduce the size of a primary partition (C:) to create Unallocated space.</li>
+                <li><strong>New Simple Volume Wizard:</strong> Step-by-step creation of a new partition (E:) including assigning drive letters and formatting.</li>
+                <li><strong>Delete Volume:</strong> Simulating the removal of a partition to free up space.</li>
+                <li><strong>Extend Volume:</strong> Adding unallocated space back to an existing primary partition.</li>
+                <li><strong>File Explorer Integration:</strong> Verifying partition creation dynamically in a simulated "This PC" environment.</li>
+            </ul>
+        </div>
+
+        <div class="action-area">
+            <p><strong>How to use:</strong> Click the access button below, follow the instructions in the blue panel, and use the 'Run' dialog to open Disk Management.</p>
+            <a href="https://tibinjohn193-blip.github.io/windows-11/LAB5.html" class="btn-primary" target="_blank">▶ Access Lab 5 Simulation</a>
+            <br>
+            <a href="index.html" class="back-btn">← Back to Lab Dashboard</a>
+        </div>
+
+    </div>
+
+</body>
+</html>

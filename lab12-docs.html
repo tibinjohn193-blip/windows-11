@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab 12: Windows 11 BitLocker Encryption & Password Unlock</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --primary: #0067C0;
+            --text-main: #2c3e50;
+            --text-muted: #546e7a;
+            --border-radius: 10px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.7;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.2rem;
+            letter-spacing: 0.5px;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+
+        h2 {
+            color: var(--primary);
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-top: 35px;
+            font-size: 1.4rem;
+        }
+
+        h3 {
+            color: #333;
+            margin-top: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .intro-text {
+            font-size: 1.1rem;
+            color: var(--text-main);
+            background-color: #f8f9fa;
+            padding: 15px 20px;
+            border-left: 4px solid var(--primary);
+            border-radius: 4px;
+            margin-bottom: 30px;
+        }
+
+        ul, ol {
+            color: var(--text-muted);
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        strong {
+            color: var(--text-main);
+        }
+
+        code, kbd {
+            background: #e0e0e0;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #d84315;
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+
+        /* Scenario Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+            margin-bottom: 30px;
+        }
+
+        .info-box {
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            background: #fafafa;
+            text-align: center;
+        }
+
+        .info-box.target { border-top: 4px solid #e81123; }
+        .info-box.backup { border-top: 4px solid #4CAF50; }
+        .info-box.auth { border-top: 4px solid #FF9800; }
+
+        .info-box h4 {
+            margin: 0 0 10px 0;
+            font-size: 1.1rem;
+            color: #333;
+        }
+
+        .info-box .detail {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #0067C0;
+            margin-top: 10px;
+        }
+        
+        .info-box .sub-detail {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        /* Step highlight */
+        .step-block {
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 25px;
+            margin-top: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+
+        .step-block ol > li {
+            color: var(--text-muted);
+            margin-top: 10px;
+        }
+
+        .action-area {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+        }
+
+        .btn-primary {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            border: 2px solid #28a745;
+            font-size: 1.2rem;
+            padding: 15px 40px;
+            border-radius: 6px;
+            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: #218838;
+            border-color: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(40, 167, 69, 0.4);
+        }
+        
+        .back-btn {
+            display: inline-block;
+            margin-top: 20px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: 0.2s;
+        }
+        
+        .back-btn:hover {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Lab 12: BitLocker Drive Encryption</h1>
+        <p>Secure a local drive, back up recovery keys, and manage encryption</p>
+    </header>
+
+    <div class="container">
+        
+        <div class="intro-text">
+            <strong>🛡️ What is BitLocker?</strong><br>
+            BitLocker is a full-volume encryption feature included with Microsoft Windows designed to protect data by providing encryption for entire volumes. It ensures that data remains secure even if a device is lost, stolen, or improperly decommissioned.
+        </div>
+
+        <h2>📌 Key Concepts Covered in this Lab</h2>
+        <ul>
+            <li><strong>Password Authentication:</strong> Securing a fixed data drive using a strong password.</li>
+            <li><strong>Recovery Key Backup:</strong> Saving a 48-digit recovery key to an alternate drive (never the one being encrypted) to prevent permanent data loss.</li>
+            <li><strong>Encryption Modes:</strong> Choosing between "Used disk space only" (for new drives) and "New encryption mode" (XTS-AES for fixed drives).</li>
+            <li><strong>Drive Locking Mechanism:</strong> Understanding that BitLocker drives remain unlocked for the current session and require a system restart or sign-out to lock securely.</li>
+            <li><strong>BitLocker Management:</strong> Accessing the Control Panel to change passwords, remove passwords, or completely turn off BitLocker (decryption).</li>
+        </ul>
+
+        <h2>🖥️ Lab Scenario</h2>
+        <div class="info-grid">
+            <div class="info-box target">
+                <h4>🎯 Target Drive</h4>
+                <div class="detail">Data (D:)</div>
+                <div class="sub-detail">The drive to be encrypted</div>
+            </div>
+            
+            <div class="info-box backup">
+                <h4>💾 Backup Location</h4>
+                <div class="detail">Backup (E:)</div>
+                <div class="sub-detail">Safe storage for recovery key</div>
+            </div>
+
+            <div class="info-box auth">
+                <h4>🔑 Unlock Method</h4>
+                <div class="detail">Password</div>
+                <div class="sub-detail">Credentials: <code>123</code></div>
+            </div>
+        </div>
+
+        <h2>📋 Step-by-Step Lab Instructions</h2>
+        <p>Follow these steps within the interactive simulator to complete the lab:</p>
+
+        <div class="step-block" style="border-left: 4px solid #0078D7; background-color: #f4fbff;">
+            <h3>🔹 Part 1: Enable BitLocker & Save Recovery Key</h3>
+            <ol>
+                <li>Open <strong>File Explorer</strong> to view your system drives.</li>
+                <li>Right-click on <strong>Data (D:)</strong> and select <strong>Turn on BitLocker</strong>.</li>
+                <li>In the BitLocker Wizard, check <strong>Use a password to unlock the drive</strong>, enter your password in both fields, and click Next.</li>
+                <li>Choose <strong>Save to a file</strong> to back up your recovery key.</li>
+                <li>In the Save dialog, select the <strong>Backup (E:)</strong> drive and click Save.</li>
+                <li>Select <strong>Encrypt used disk space only</strong> and click Next.</li>
+                <li>Select <strong>New encryption mode</strong> (best for fixed drives) and click Next.</li>
+                <li>Click <strong>Start encrypting</strong> and wait for the progress bar to complete.</li>
+            </ol>
+        </div>
+
+        <div class="step-block" style="border-left: 4px solid #FF9800; background-color: #fffaf0;">
+            <h3>🔹 Part 2: Lock the Drive</h3>
+            <p><em>(Note: A BitLocker drive remains unlocked after initial encryption until the system is restarted or the user signs out).</em></p>
+            <ol>
+                <li>Click the <strong>Start Menu</strong>.</li>
+                <li>Click your <strong>Administrator profile</strong> icon at the bottom left and select <strong>Sign out</strong>.</li>
+                <li>At the Windows Lock Screen, click <strong>Sign in</strong> to log back into the system.</li>
+            </ol>
+        </div>
+
+        <div class="step-block" style="border-left: 4px solid #4CAF50; background-color: #f0fdf4;">
+            <h3>🔹 Part 3: Unlock via Password</h3>
+            <ol>
+                <li>Open <strong>File Explorer</strong>. You will now see that Data (D:) has a <strong>Locked Padlock (🔒)</strong> icon.</li>
+                <li>Double-click the locked <strong>Data (D:)</strong> drive.</li>
+                <li>A BitLocker prompt will appear in the top right corner. Enter your password and click <strong>Unlock</strong>.</li>
+                <li>The drive icon will change to an <strong>Unlocked Padlock (🔓)</strong>, indicating you have access.</li>
+            </ol>
+        </div>
+
+        <div class="step-block" style="border-left: 4px solid #e81123; background-color: #fff0f1;">
+            <h3>🔹 Part 4: Manage and Turn Off BitLocker</h3>
+            <ol>
+                <li>Right-click the unlocked <strong>Data (D:)</strong> drive and select <strong>Manage BitLocker</strong>.</li>
+                <li>The Control Panel will open, displaying the full suite of BitLocker management options (Change password, Remove password, Back up your recovery key, etc.).</li>
+                <li>Click <strong>Turn off BitLocker</strong>.</li>
+                <li>Confirm by clicking <strong>Turn off BitLocker</strong> on the prompt. The drive will begin decrypting.</li>
+            </ol>
+        </div>
+
+        <div class="action-area">
+            <p>Test out your skills and run through the exact configuration steps in the interactive simulation below:</p>
+            <a href="https://tibinjohn193-blip.github.io/windows-11/lab12.html" class="btn-primary" target="_blank">▶ Access Lab 12 Simulation</a>
+            <br>
+            <a href="index.html" class="back-btn">← Back to Lab Dashboard</a>
+        </div>
+
+    </div>
+
+</body>
+</html>

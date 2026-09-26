@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab 8: Windows 11 Local User Management (lusrmgr.msc)</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --primary: #0067C0;
+            --text-main: #2c3e50;
+            --text-muted: #546e7a;
+            --border-radius: 10px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.7;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.2rem;
+            letter-spacing: 0.5px;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+
+        h2 {
+            color: var(--primary);
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-top: 35px;
+            font-size: 1.4rem;
+        }
+
+        h3 {
+            color: #333;
+            margin-top: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .intro-text {
+            font-size: 1.1rem;
+            color: var(--text-main);
+            background-color: #f8f9fa;
+            padding: 15px 20px;
+            border-left: 4px solid var(--primary);
+            border-radius: 4px;
+            margin-bottom: 30px;
+        }
+
+        ul, ol {
+            color: var(--text-muted);
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        strong {
+            color: var(--text-main);
+        }
+
+        code, kbd {
+            background: #e0e0e0;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #d84315;
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+
+        kbd {
+            background: #333;
+            color: #fff;
+            border-radius: 3px;
+            border-bottom: 2px solid #111;
+        }
+
+        /* Step highlight */
+        .step-block {
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 25px;
+            margin-top: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+
+        .step-block ol > li {
+            color: var(--text-muted);
+            margin-top: 10px;
+        }
+
+        .action-area {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+        }
+
+        .btn-primary {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            border: 2px solid #28a745;
+            font-size: 1.2rem;
+            padding: 15px 40px;
+            border-radius: 6px;
+            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: #218838;
+            border-color: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(40, 167, 69, 0.4);
+        }
+        
+        .back-btn {
+            display: inline-block;
+            margin-top: 20px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: 0.2s;
+        }
+        
+        .back-btn:hover {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Lab 8: Local User Management</h1>
+        <p>Manage accounts and groups using lusrmgr.msc</p>
+    </header>
+
+    <div class="container">
+        
+        <div class="intro-text">
+            <strong>📖 What is Local User Management?</strong><br>
+            Windows allows multiple people to share the same computer by creating separate user accounts. The <strong>Local Users and Groups (<code>lusrmgr.msc</code>)</strong> console is an advanced administrative tool used by IT professionals to centrally manage these accounts, control their status, and assign them to specific security groups (like the Administrators group).
+        </div>
+
+        <h2>🎯 Lab Objectives</h2>
+        <ul>
+            <li>Access the Local Users and Groups console via the Windows Run dialog.</li>
+            <li>Create a new local user account and set an initial password.</li>
+            <li>Navigate the Windows login screen to switch between user profiles.</li>
+            <li>Force a password reset for a standard user from an administrative account.</li>
+            <li>Disable and re-enable access to a user account.</li>
+            <li>Grant administrative privileges to a standard user by adding them to the Administrators security group.</li>
+        </ul>
+
+        <h2>📋 Step-by-Step Lab Instructions</h2>
+        <p>Follow these steps within the simulator to complete the lab:</p>
+
+        <div class="step-block" style="border-left: 4px solid #0078D7; background-color: #f4fbff;">
+            <h3>🔹 Part 1: Create a New User</h3>
+            <ol>
+                <li><strong>Open the Console:</strong> Click the <strong>Start Menu (🪟)</strong>, search for <code>run</code>, and open the Run app. Type <code>lusrmgr.msc</code> and click <strong>OK</strong>.</li>
+                <li><strong>Navigate to Users:</strong> Click on the <strong>Users</strong> folder in the left sidebar.</li>
+                <li><strong>Create Account:</strong> Right-click an empty space in the center pane and select <strong>New User...</strong></li>
+                <li><strong>Set Details:</strong> Enter a username (e.g., <code>User1</code>) and a password. Uncheck "User must change password at next logon", click <strong>Create</strong>, and then close the dialog.</li>
+            </ol>
+        </div>
+
+        <div class="step-block" style="border-left: 4px solid #9C27B0; background-color: #fcf4ff;">
+            <h3>🔹 Part 2: Test the New Account</h3>
+            <ol>
+                <li><strong>Switch User:</strong> Click the <strong>Start Menu (🪟)</strong>, click the <strong>Administrator</strong> profile picture at the bottom left, and select <strong>Switch user / Sign out</strong>.</li>
+                <li><strong>Log In:</strong> On the lock screen, select your newly created user, enter the password, and click <strong>Submit</strong>.</li>
+                <li><strong>Return to Admin:</strong> Once logged in, open the Start Menu again, click the user profile, and switch back to the <strong>Administrator</strong> account.</li>
+            </ol>
+        </div>
+
+        <div class="step-block" style="border-left: 4px solid #e81123; background-color: #fff0f1;">
+            <h3>🔹 Part 3: Reset Password & Disable Account</h3>
+            <ol>
+                <li><strong>Reopen Console:</strong> Use Run (<kbd>Win</kbd> + <kbd>R</kbd>) to open <code>lusrmgr.msc</code> again.</li>
+                <li><strong>Reset Password:</strong> Right-click your new user and select <strong>Set Password...</strong>. Acknowledge the warning, enter a new password, and save.</li>
+                <li><strong>Disable Account:</strong> Double-click the user to open their Properties. Check the <strong>Account is disabled</strong> box and click <strong>Apply</strong>. Notice the downward red arrow icon appear over the user. <em>(Uncheck it and click Apply again to re-enable the account for the next step)</em>.</li>
+            </ol>
+        </div>
+
+        <div class="step-block" style="border-left: 4px solid #4CAF50; background-color: #f0fdf4;">
+            <h3>🔹 Part 4: Grant Administrator Privileges</h3>
+            <ol>
+                <li><strong>Access Member Tab:</strong> Inside the user's Properties window, click the <strong>Member Of</strong> tab at the top.</li>
+                <li><strong>Add Group:</strong> Click the <strong>Add...</strong> button.</li>
+                <li><strong>Assign Role:</strong> In the object names box, type <code>Administrators</code> and click <strong>OK</strong>.</li>
+                <li><strong>Finalize:</strong> Click <strong>OK</strong> on the Properties window to save your changes. The user now has full administrative rights on the PC.</li>
+            </ol>
+        </div>
+
+        <div class="action-area">
+            <p>Test out your skills and run through the exact configuration steps in the interactive simulation below:</p>
+            <a href="https://tibinjohn193-blip.github.io/windows-11/lab8.html" class="btn-primary" target="_blank">▶ Access Lab 8 Simulation</a>
+            <br>
+            <a href="index.html" class="back-btn">← Back to Lab Dashboard</a>
+        </div>
+
+    </div>
+
+</body>
+</html>

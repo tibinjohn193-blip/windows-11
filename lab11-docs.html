@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab 11: Windows 11 Malicious Software Removal Tool (MRT) Scan</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --primary: #0067C0;
+            --text-main: #2c3e50;
+            --text-muted: #546e7a;
+            --border-radius: 10px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.7;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.2rem;
+            letter-spacing: 0.5px;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+
+        h2 {
+            color: var(--primary);
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-top: 35px;
+            font-size: 1.4rem;
+        }
+
+        h3 {
+            color: #333;
+            margin-top: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .intro-text {
+            font-size: 1.1rem;
+            color: var(--text-main);
+            background-color: #f8f9fa;
+            padding: 15px 20px;
+            border-left: 4px solid var(--primary);
+            border-radius: 4px;
+            margin-bottom: 30px;
+        }
+
+        ul, ol {
+            color: var(--text-muted);
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        strong {
+            color: var(--text-main);
+        }
+
+        code, kbd {
+            background: #e0e0e0;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #d84315;
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+
+        /* Warning Box */
+        .warning-box {
+            background: #fff8e1;
+            border-left: 5px solid #ffc107;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+
+        .warning-box p {
+            margin: 0 0 10px 0;
+            color: #5d4037;
+            font-size: 1.1rem;
+        }
+
+        .warning-box ul {
+            margin: 0;
+            color: #5d4037;
+        }
+
+        .warning-box li {
+            color: #5d4037;
+        }
+
+        /* Step highlight */
+        .step-block {
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 25px;
+            margin-top: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+
+        .step-block ol > li {
+            color: var(--text-muted);
+            margin-top: 10px;
+        }
+
+        .action-area {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+        }
+
+        .btn-primary {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            border: 2px solid #28a745;
+            font-size: 1.2rem;
+            padding: 15px 40px;
+            border-radius: 6px;
+            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: #218838;
+            border-color: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(40, 167, 69, 0.4);
+        }
+        
+        .back-btn {
+            display: inline-block;
+            margin-top: 20px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: 0.2s;
+        }
+        
+        .back-btn:hover {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Lab 11: Malicious Software Removal Tool (MRT)</h1>
+        <p>Manually launch and scan for prevalent malware</p>
+    </header>
+
+    <div class="container">
+        
+        <div class="intro-text">
+            <strong>🛡️ What is the Malicious Software Removal Tool (MRT)?</strong><br>
+            The <strong>Microsoft Malicious Software Removal Tool (MSRT)</strong> is a built-in, free utility provided by Microsoft that scans computers running Windows for specific, prevalent malicious software (such as Blaster, Sasser, and Mydoom) and helps remove the infection if found.
+        </div>
+
+        <h2>📌 Key Features</h2>
+        <ul>
+            <li><strong>Built-in Utility:</strong> Pre-installed on Windows systems; no separate download or installation is required to run it manually.</li>
+            <li><strong>Regular Updates:</strong> Microsoft releases an updated version of this tool on the second Tuesday of every month (Patch Tuesday) via Windows Update.</li>
+            <li><strong>Targeted Detection:</strong> It specifically targets known, high-risk malware families rather than acting as a general-purpose scanner.</li>
+            <li><strong>Multiple Scan Modes:</strong> Offers Quick Scan (critical system areas), Full Scan (entire system), and Customized Scan (specific folders).</li>
+            <li><strong>Silent Execution:</strong> Usually runs quietly in the background after a Windows Update, but can be triggered manually via the <code>mrt</code> command.</li>
+        </ul>
+
+        <div class="warning-box">
+            <p><strong>⚠️ Important Note on Uses:</strong> MRT is NOT a replacement for a full antivirus program (like Windows Defender or third-party AVs).</p>
+            <ul>
+                <li>It <strong>does not</strong> provide real-time protection.</li>
+                <li>It <strong>does not</strong> prevent malware from entering the system.</li>
+                <li>It is exclusively used for <strong>post-infection cleanup</strong> of specific, widespread threats.</li>
+            </ul>
+        </div>
+
+        <h2>🎯 Lab Objectives</h2>
+        <ul>
+            <li>Launch the Windows <strong>Run</strong> application via the Start Menu Search.</li>
+            <li>Execute the <code>mrt</code> command to open the tool.</li>
+            <li>Handle Windows <strong>User Account Control (UAC)</strong> elevation prompts.</li>
+            <li>Navigate the MRT Wizard and initiate a <strong>Quick Scan</strong>.</li>
+            <li>Analyze the scan process and review the final malware detection results.</li>
+        </ul>
+
+        <h2>📋 Step-by-Step Lab Instructions</h2>
+        <p>Follow these steps within the interactive simulator to complete the lab:</p>
+
+        <div class="step-block" style="border-left: 4px solid #0078D7; background-color: #f4fbff;">
+            <h3>🔹 Part 1: Launch the Tool</h3>
+            <ol>
+                <li>Click the <strong>Start Menu (🪟)</strong>.</li>
+                <li>Type <code>run</code> in the search box and click the <strong>Run</strong> app from the results.</li>
+                <li>In the Run dialog box, type <code>mrt</code> and click <strong>OK</strong>.</li>
+                <li>A <strong>User Account Control (UAC)</strong> prompt will appear asking for administrator privileges. Click <strong>Yes</strong> to allow the tool to make changes to your device.</li>
+            </ol>
+        </div>
+
+        <div class="step-block" style="border-left: 4px solid #9C27B0; background-color: #fcf4ff;">
+            <h3>🔹 Part 2: Execute the Scan</h3>
+            <ol>
+                <li>The <strong>MRT Wizard</strong> will open. Read the Welcome screen and click <strong>Next</strong>.</li>
+                <li>You will be prompted to choose a scan type. Select <strong>Quick scan</strong> (which checks the areas of the system most likely to contain malicious software) and click <strong>Next</strong>.</li>
+                <li>The tool will begin scanning your computer. You can observe the progress bar, files scanned, and the current file path being checked (e.g., <code>C:\Windows\System32\hal.dll</code>).</li>
+                <li>Wait a few moments for the scan simulation to complete.</li>
+            </ol>
+        </div>
+
+        <div class="step-block" style="border-left: 4px solid #4CAF50; background-color: #f0fdf4;">
+            <h3>🔹 Part 3: Review Results</h3>
+            <ol>
+                <li>Once the scan finishes, the results screen will appear.</li>
+                <li>Verify the message: <strong>"No malicious software was detected."</strong></li>
+                <li>Click <strong>Finish</strong> to close the tool and complete the lab.</li>
+            </ol>
+        </div>
+
+        <div class="action-area">
+            <p>Test out your skills and run through the exact configuration steps in the interactive simulation below:</p>
+            <a href="https://tibinjohn193-blip.github.io/windows-11/lab11.html" class="btn-primary" target="_blank">▶ Access Lab 11 Simulation</a>
+            <br>
+            <a href="index.html" class="back-btn">← Back to Lab Dashboard</a>
+        </div>
+
+    </div>
+
+</body>
+</html>
